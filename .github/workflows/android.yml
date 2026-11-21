@@ -1,0 +1,123 @@
+name: Android APK
+
+# Builds the Kwik Klin APK on every push / PR and uploads it as a workflow
+# artifact. Pushes to main additionally publish a GitHub Release with the APK
+# attached, so the download link can be shared directly (no GitHub login).
+#
+# Signing: release builds use the shared debug.keystore committed at the repo
+# root (password "android"). That key is for sideloading only; a Play Store
+# upload key must live in repository secrets, never in git.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle (with build cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Read app version
+        id: version
+        run: |
+          name=$(sed -nE 's/^\s*versionName\s*=\s*"([^"]+)".*/\1/p' app/build.gradle.kts | head -1)
+          code=$(sed -nE 's/^\s*versionCode\s*=\s*([0-9]+).*/\1/p' app/build.gradle.kts | head -1)
+          echo "name=${name:-0.0.0}" >> "$GITHUB_OUTPUT"
+          echo "code=${code:-0}" >> "$GITHUB_OUTPUT"
+          echo "Version $name ($code)"
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Rename APK
+        id: apk
+        run: |
+          src=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          out="KwikKlin-v${{ steps.version.outputs.name }}-build${{ github.run_number }}.apk"
+          cp "$src" "$out"
+          ls -la "$out"
+          echo "path=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KwikKlin-apk-build${{ github.run_number }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish GitHub Release (main only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}-build${{ github.run_number }}
+          name: Kwik Klin v${{ steps.version.outputs.name }} (build ${{ github.run_number }})
+          generate_release_notes: true
+          files: ${{ steps.apk.outputs.path }}
+
+  unit-tests:
+    name: Unit & screenshot tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle (with build cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-build${{ github.run_number }}
+          path: app/build/screenshots/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-build${{ github.run_number }}
+          path: app/build/reports/tests/
+          if-no-files-found: ignore

@@ -21,6 +21,7 @@ This application strictly separates **Staff Roles** from **Shop Subscription Pla
 
 ---
 
+
 ## 2. Reused Backend Endpoints (`/staff/api/*`)
 
 No second database or duplicate business logic was created. The app talks directly to the existing FastAPI backend:
@@ -69,6 +70,20 @@ No second database or duplicate business logic was created. The app talks direct
    gradle :app:assembleDebug
    ```
 2. Default backend URL is `https://kwikklin.online` (configured via `CRM_BASE_URL` in `.env.example` and editable live inside the app's **Login → Server URL** or **Profile → App Settings**).
+
+### Build & download the APK
+
+- **From GitHub (no laptop needed):** every push to `main` runs the
+  [Android APK](.github/workflows/android.yml) workflow, which builds a release
+  APK and publishes it as a GitHub Release (`v<version>-build<N>`) with the
+  `.apk` attached. Open the repo's **Releases** page and download the latest
+  file, or grab the artifact from the workflow run. Pull requests only produce
+  the artifact.
+- **Locally:** `./gradlew :app:assembleRelease` → `app/build/outputs/apk/release/app-release.apk`.
+- **Signing:** builds are signed with the shared `debug.keystore` at the repo
+  root (password `android`), so a newer build installs over an older one on the
+  same phone. It is a sideload-only key; a Play Store upload key must be stored
+  in repository secrets, never committed.
 
 ## 5. Known Backend-Side Note for Background Push (FCM)
 
