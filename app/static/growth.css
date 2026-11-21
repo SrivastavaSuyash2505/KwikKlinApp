@@ -1,0 +1,95 @@
+/* Growth Control Center (growth.js).
+ * phone: ek column; tablet (>=768): action cards 2 col, funnel/ROI 2 col;
+ * desktop (>=1024): actions 3 col, metrics grid. Rang tokens.css se. */
+
+.growth-root { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
+.growth-root > * { min-width: 0; }
+.gr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.gr-head h3 { margin: 0 0 2px; font-size: 17px; }
+.gr-head p { margin: 0; font-size: 13px; }
+.gr-period { display: inline-flex; gap: 2px; padding: 3px; border-radius: 99px; background: var(--bg); border: 1px solid var(--border); }
+.gr-period button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 99px; background: none; color: var(--ink-2); font-weight: 600; font-size: 13px; cursor: pointer; }
+.gr-period button.on { background: var(--ink); color: #fff; }
+.gr-skel { height: 72px; border-radius: var(--r-lg); background: linear-gradient(90deg, var(--n100), var(--bg), var(--n100)); background-size: 200% 100%; animation: grShimmer 1.2s infinite linear; }
+@keyframes grShimmer { to { background-position: -200% 0; } }
+.gr-empty { padding: 18px; border-radius: var(--r-lg); background: var(--bg); color: var(--ink-2); font-size: 14px; text-align: center; }
+.gr-empty.err { color: var(--error); background: var(--error-soft); }
+
+/* ---- action cards ---- */
+.gr-actions.card { padding: 16px; }
+.gr-cards { display: grid; gap: 10px; }
+.gr-card { display: grid; gap: 6px; padding: 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); border-left: 4px solid var(--n200); }
+.gr-card.pr-high { border-left-color: var(--error); }
+.gr-card.pr-medium { border-left-color: var(--warning); }
+.gr-card.pr-low { border-left-color: var(--success); }
+.gr-card.snoozed { opacity: .5; }
+.gr-card-top { display: flex; justify-content: space-between; align-items: center; }
+.gr-pri { font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 3px 9px; border-radius: 99px; background: var(--n100); color: var(--ink-2); }
+.pr-high .gr-pri { background: var(--error-soft); color: var(--error); }
+.pr-medium .gr-pri { background: var(--warning-soft); color: var(--warning); }
+.pr-low .gr-pri { background: var(--success-soft); color: var(--success); }
+.gr-snz { font-size: 11px; color: var(--ink-3); }
+.gr-x { width: 30px; height: 30px; border: 0; border-radius: 50%; background: none; color: var(--ink-3); font-size: 14px; cursor: pointer; }
+.gr-x:hover { background: var(--bg); color: var(--ink); }
+.gr-card > b { font-size: 15px; color: var(--ink); }
+.gr-card > p { margin: 0; font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+.gr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gr-chip { min-height: 30px; padding: 0 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--bg); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.gr-chip small { color: var(--ink-3); font-weight: 500; }
+.gr-go { justify-self: start; margin-top: 4px; min-height: 36px; padding: 0 2px; border: 0; background: none; color: var(--brand-ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+
+/* ---- KPIs / funnel / ROI ---- */
+.gr-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.gr-kpi { padding: 14px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); min-width: 0; }
+.gr-kpi span { display: block; font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.gr-kpi strong { display: block; font-size: clamp(20px, 5vw, 28px); margin: 4px 0 2px; color: var(--ink); letter-spacing: -.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.gr-kpi small { display: block; font-size: 12px; color: var(--ink-3); }
+.gr-kpi.ok strong { color: var(--success); }
+.gr-grid { display: grid; gap: 14px; }
+.gr-grid .card { padding: 16px; min-width: 0; }
+.gr-card-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.gr-card-h b { font-size: 15px; }
+.gr-card-h .muted { font-size: 12px; }
+.gr-info { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); cursor: pointer; font-size: 14px; }
+/* Text hamesha fill ke BAHAR padhne layak: chhoti bar (Delivered 1) par
+   safed akshar halke track par gayab ho jaate the. Fill halka tint, text ink. */
+.gr-bar { position: relative; height: 40px; margin-bottom: 8px; border-radius: 10px; background: var(--bg); overflow: hidden; display: flex; align-items: center; }
+.gr-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 10px; background: var(--c); opacity: .28; transition: width .4s ease; }
+.gr-bar::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
+.gr-bar.s0 { --c: #0ea5e9; } .gr-bar.s1 { --c: #2563eb; } .gr-bar.s2 { --c: #7c3aed; } .gr-bar.s3 { --c: var(--success); }
+.gr-bar span, .gr-bar b { position: relative; z-index: 1; color: var(--ink); font-size: 13px; font-weight: 600; padding: 0 12px; }
+.gr-bar b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.gr-foot { font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
+.gr-table-wrap { overflow-x: auto; }
+.gr-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+.gr-table th, .gr-table td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gr-table th:first-child, .gr-table td:first-child { text-align: left; }
+.gr-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.gr-table td small { display: block; color: var(--ink-3); font-size: 11.5px; white-space: normal; }
+.gr-table td.neg { color: var(--error); font-weight: 700; }
+.gr-defs { padding: 16px; margin-top: 14px; }
+.gr-defs[hidden] { display: none !important; }
+.gr-defs dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; }
+.gr-defs dt { font-weight: 700; text-transform: capitalize; color: var(--ink); }
+.gr-defs dd { margin: 0; color: var(--ink-2); }
+.gr-defs p { margin: 12px 0 0; font-size: 12px; }
+
+/* ---- customer page card ---- */
+.gr-next { margin: 0 12px 12px; padding: 14px; border-radius: var(--r-lg); background: var(--info-soft); border: 1px solid color-mix(in srgb, var(--info) 25%, transparent); display: grid; gap: 8px; }
+.gr-next-h { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.gr-next-h .muted { font-size: 12.5px; }
+.gr-why { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+.gr-quiet { margin: 0; font-size: 13px; color: var(--warning); }
+.gr-preview { white-space: pre-wrap; font-size: 13.5px; padding: 12px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--border); }
+.gr-preview[hidden] { display: none !important; }
+.gr-next-act { display: flex; gap: 8px; flex-wrap: wrap; }
+
+@media (min-width: 768px) {
+  .gr-cards { grid-template-columns: 1fr 1fr; }
+  .gr-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gr-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 1024px) {
+  .gr-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gr-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+}

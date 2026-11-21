@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Kwik Klin Control — vendor panel for tenants, billing, server health and audit.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#0c1430">
+<title>Kwik Klin Control</title>
+<link rel="manifest" href="/control/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/control/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KK Control">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5af0'/%3E%3Ctext x='16' y='21' font-size='13' font-weight='700' text-anchor='middle' fill='%23fff' font-family='sans-serif'%3EKK%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/admin/static/tokens.css?v=__V__">
+<link rel="stylesheet" href="/admin/static/control.css?v=__V__">
+<link rel="stylesheet" href="/admin/static/campaign-shared.css?v=__V__">
+<link rel="stylesheet" href="/admin/static/kk-ds.css?v=__V__">
+<link rel="stylesheet" href="/admin/static/kk-passkey.css?v=__V__">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ===== Signed out: ek saaf card, dashboard jaisa logo ===== -->
+<div id="auth" class="auth">
+  <div class="auth-card">
+    <div class="logo">
+      <div class="logo-badge">KK</div>
+      <div><h1>Kwik Klin</h1><small>Control Center</small></div>
+    </div>
+    <section id="signedout" class="state">
+      <div class="title">Sign in to see your clients</div>
+      <p>Your password is exchanged for a secure session cookie and is never stored in this browser.</p>
+    </section>
+    <!-- Credentials are exchanged once for an httpOnly session cookie. -->
+    <form id="signin" class="auth-form" autocomplete="on">
+      <label for="login">Login ID</label>
+      <input id="login" name="username" type="text" placeholder="Login ID" autofocus
+             autocomplete="username" spellcheck="false" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Password"
+             autocomplete="current-password" spellcheck="false" required>
+      <button type="submit" class="btn-primary btn-wide">Sign in</button>
+    </form>
+    <div class="auth-or"><span>or</span></div>
+    <!-- Google OAuth is an allowlisted alternative; password login remains as recovery. -->
+    <section class="auth-google" aria-label="Google sign in">
+      <a id="btn-google-signin" class="btn-ghost btn-wide" href="/control/auth/google">Continue with Google</a>
+      <p class="muted">Only the configured Google account can open this panel.</p>
+    </section>
+  </div>
+</div>
+
+<!-- ===== Signed in: sidebar + content (Kwik Klin admin jaisa) ===== -->
+<div id="appbar" class="shell hidden">
+  <div class="side-ov" id="side-ov"></div>
+  <aside class="sidebar" id="sidebar" aria-label="Control panel navigation">
+    <div class="logo">
+      <div class="logo-badge">KK</div>
+      <div><h1>Kwik Klin</h1><small>Control Center</small></div>
+    </div>
+    <nav class="nav">
+      <div class="navsec">Overview</div>
+      <a href="#dashboard" data-view="dashboard"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-dashboard"/></svg>Dashboard</a>
+      <div class="navsec">Clients</div>
+      <a href="#tenants" data-view="tenants"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-users"/></svg>Tenants</a>
+      <a href="#billing" data-view="billing"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-receipt"/></svg>Recharge &amp; billing<span class="nav-n" id="nav-recharge" hidden>0</span></a>
+      <a href="#offers" data-view="offers"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-campaign"/></svg>Offers</a>
+      <a href="#sales" data-view="sales"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-agent"/></svg>WhatsApp leads</a>
+      <div class="navsec">System</div>
+      <a href="#health" data-view="health"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-usage"/></svg>Server health<span class="nav-dot" id="nav-health" hidden></span></a>
+      <a href="#audit" data-view="audit"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-activity"/></svg>Audit log</a>
+      <a href="#settings" data-view="settings"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-settings"/></svg>Settings</a>
+    </nav>
+    <div class="side-foot">
+      <div class="sysline"><span class="dot" id="sys-dot"></span><span id="sys-line">Checking server…</span></div>
+      <div class="whoami" id="session-label">not signed in</div>
+      <button type="button" id="btn-install" class="logout" hidden><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-upload"/></svg>Install app</button>
+      <button type="button" id="btn-signout" class="logout"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-logout"/></svg>Sign out</button>
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <button type="button" class="burger" id="burger" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-menu"/></svg></button>
+      <div class="grow pagehead">
+        <h2 id="page-title">Dashboard</h2>
+        <p id="page-sub">Your clients, money and server at a glance</p>
+      </div>
+      <button type="button" id="btn-palette" class="btn-ghost hide-sm" title="Command palette (Ctrl+K)"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-search"/></svg>Search <span class="kbd">Ctrl K</span></button>
+      <button type="button" id="btn-add" class="btn-primary"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg><span class="hide-sm">Add tenant</span></button>
+    </header>
+
+    <main id="main" class="hidden">
+      <!-- ---------- Dashboard ---------- -->
+      <section class="view" id="view-dashboard" aria-labelledby="kpi-h">
+        <h3 class="sec-h" id="kpi-h">Business <span class="muted">— click a tile to see those tenants</span></h3>
+        <div class="cards" id="summary"></div>
+        <div class="dash-grid">
+          <div class="panel">
+            <div class="panel-h"><b>Server</b><a href="#health">Details</a></div>
+            <div id="dash-health" class="mini-health"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><b>Needs attention</b></div>
+            <div id="dash-attn" class="attn"></div>
+          </div>
+          <div class="panel span-2">
+            <div class="panel-h"><b>Recent activity</b><a href="#audit">Audit log</a></div>
+            <div id="dash-activity" class="feed"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Tenants ---------- -->
+      <section class="view" id="view-tenants" aria-labelledby="tenants-h" hidden>
+        <h3 class="sr-only" id="tenants-h">Tenants</h3>
+        <div class="toolbar filters" role="search">
+          <label class="sr-only" for="t-search">Search tenants</label>
+          <input id="t-search" type="search" placeholder="Search shop, slug, owner, phone, city">
+          <label class="sr-only" for="t-status">Filter by status</label>
+          <select id="t-status">
+            <option value="">Status: all</option>
+            <option value="trial">Trial</option>
+            <option value="active">Active</option>
+            <option value="past_due">Past due</option>
+            <option value="locked">Locked</option>
+            <option value="suspended">Suspended</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <label class="sr-only" for="t-plan">Filter by plan</label>
+          <select id="t-plan">
+            <option value="">Plan: all</option>
+          </select>
+          <label class="inline"><input type="checkbox" id="show-deleted"> Recycle bin</label>
+          <button type="button" id="btn-export-tenants">⬇ CSV</button>
+          <span class="muted" id="t-count" aria-live="polite"></span>
+          <span class="grow"></span>
+          <button type="button" id="t-prev" disabled>← Prev</button>
+          <button type="button" id="t-next" disabled>Next →</button>
+        </div>
+        <div class="tbl-wrap">
+          <table id="tenants" class="stack">
+            <caption class="sr-only">Tenants — click a shop name to open its profile</caption>
+            <thead><tr>
+              <th scope="col" aria-sort="none"><button type="button" class="sort" data-sort="shop_name">Shop</button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort" data-sort="plan">Plan</button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort" data-sort="status">Status</button></th>
+              <th scope="col" aria-sort="none"><button type="button" class="sort" data-sort="trial_ends_at">Days left</button></th>
+              <th scope="col">WhatsApp</th>
+              <th scope="col">Orders (mo)</th>
+              <th scope="col">WA msgs (mo)</th>
+              <th scope="col">AI (mo)</th>
+              <th scope="col">Staff</th>
+              <th scope="col">Users</th>
+              <th scope="col">MRR</th>
+              <th scope="col">Owner</th>
+              <th scope="col">Actions</th>
+            </tr></thead>
+            <tbody id="tenants-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Billing & recharges ---------- -->
+      <section class="view" id="view-billing" aria-labelledby="billing-h" hidden>
+        <h3 class="sec-h" id="aicost-h">AI cost <span class="muted">— what Gemini costs you this month, per reply and per plan; alerts also reach your WhatsApp at night</span></h3>
+        <div class="panel" id="aicost-box" aria-labelledby="aicost-h"></div>
+        <h3 class="sec-h" id="plans-h">Solo plans · AI replies <span class="muted">— pilot quotas; changes apply without a deploy</span></h3>
+        <div class="panel" id="plans-wrap" aria-labelledby="plans-h"></div>
+        <h3 class="sec-h" id="rzp-h">Payments <span class="muted">— choose UPI or Razorpay for plans, recharge and Kwik Klin's own bills; other shops' customers always pay the shop by UPI</span></h3>
+        <div class="panel" id="rzp-box" aria-labelledby="rzp-h"></div>
+        <h3 class="sec-h" id="gst-h">GST on your plans <span class="muted">— your own charge to shops; each shop's bill GST is separate</span></h3>
+        <div class="panel" id="gst-box" aria-labelledby="gst-h"></div>
+        <h3 class="sec-h" id="pricing-h">Recharge prices <span class="muted">— what ₹1 buys, and the packs clients see on their billing page</span></h3>
+        <div class="panel" id="pricing-box" aria-labelledby="pricing-h"></div>
+        <h3 class="sec-h" id="recharge-h">Recharge requests <span class="muted">— approve only after you see the money in your bank or UPI app</span></h3>
+        <div class="toolbar">
+          <label class="sr-only" for="rc-status">Recharge status</label>
+          <select id="rc-status">
+            <option value="pending">Waiting</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="">All</option>
+          </select>
+        </div>
+        <div class="tbl-wrap" id="recharge-wrap">
+          <table id="recharge" class="stack">
+            <caption class="sr-only">Recharge requests from clients</caption>
+            <thead><tr>
+              <th scope="col">When</th><th scope="col">Shop</th><th scope="col">Pack</th>
+              <th scope="col">Amount</th><th scope="col">By</th><th scope="col">Status</th><th scope="col">Actions</th>
+            </tr></thead>
+            <tbody id="recharge-body"></tbody>
+          </table>
+        </div>
+        <h3 class="sec-h" id="billing-h">Billing events</h3>
+        <div class="tbl-wrap" id="billing-wrap">
+          <table id="billing" class="stack">
+            <caption class="sr-only">Recent billing events</caption>
+            <thead><tr>
+              <th scope="col">When</th><th scope="col">Tenant</th>
+              <th scope="col">Event</th><th scope="col">Amount</th>
+            </tr></thead>
+            <tbody id="billing-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- Server health ---------- -->
+      <section class="view" id="view-offers" aria-labelledby="offers-h" hidden>
+        <h3 class="sec-h" id="offers-h">Offer cards in the owner app</h3>
+        <div class="toolbar">
+          <button type="button" id="btn-new-offer" class="btn-primary">＋ New offer</button>
+          <label class="inline"><input type="checkbox" id="offers-auto"> Also show the automatic plan offer when no offer is live</label>
+        </div>
+        <p class="muted" id="offers-note"></p>
+        <div id="offers-list"></div>
+      </section>
+
+      <!-- ---------- WhatsApp leads: vendor ki apni bikri (services/sales_outreach.py) ---------- -->
+      <section class="view" id="view-sales" aria-labelledby="sales-h" hidden>
+        <h3 class="sr-only" id="sales-h">WhatsApp leads</h3>
+        <div id="sl-campaigns" class="sl-campaigns" aria-live="polite"></div>
+        <details class="sl-setup" id="sl-setup">
+          <summary><span class="sl-setup-t"><b>Setup</b><small class="muted" id="sl-setup-sub">Number, message and sheet</small></span></summary>
+        <div class="sl-grid">
+          <div class="panel sl-wa">
+            <div class="sl-step"><span>1</span><b>Campaign number</b></div>
+            <div id="sl-wa"></div>
+          </div>
+          <div class="panel sl-compose">
+            <div class="sl-step"><span>2</span><b>Message and sheet</b>
+              <select id="sl-pick" aria-label="Campaign"></select>
+            </div>
+            <div class="sl-compose-grid">
+              <div class="sl-form">
+                <label for="sl-name">Campaign name</label>
+                <input id="sl-name" maxlength="120" placeholder="Varanasi laundries" autocomplete="off">
+                <div class="sl-label-row">
+                  <label for="sl-text">First message</label>
+                  <button type="button" class="btn-ghost btn-sm" id="sl-ai">✨ Write with AI</button>
+                </div>
+                <textarea id="sl-text" rows="10" maxlength="1000"></textarea>
+                <div class="sl-vars" id="sl-vars" role="group" aria-label="Add a variable to the message"></div>
+                <p class="muted sl-small" id="sl-vars-hint"></p>
+                <button type="button" class="sl-link" id="sl-b-toggle">＋ Try a second message</button>
+                <div id="sl-b-box" hidden>
+                  <label for="sl-text-b">Message B <small class="muted">goes to half the shops, so you can see which gets more replies</small></label>
+                  <textarea id="sl-text-b" rows="6" maxlength="1000"></textarea>
+                </div>
+                <p class="muted">{{menu}} puts your live plans and prices in as a numbered list. Whoever replies with a number becomes a hot lead. Tap a button above to add a name, shop, city or area. A STOP line is added if you leave it out.</p>
+                <div class="sl-label-row"><span class="sl-lbl">Photo <small class="muted">optional</small></span></div>
+                <div class="sl-photo">
+                  <label class="btn-ghost btn-sm" for="sl-image" id="sl-image-add">Add photo</label>
+                  <input id="sl-image" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only">
+                  <button type="button" class="btn-ghost btn-sm" id="sl-image-x" hidden>Remove photo</button>
+                  <small class="muted">JPG, PNG or WEBP, up to 5 MB. Your message goes under it.</small>
+                </div>
+                <label for="sl-limit">Messages a day <b id="sl-limit-v"></b></label>
+                <input id="sl-limit" type="range" min="1" step="1">
+                <label for="sl-interval">Gap between messages</label>
+                <div class="sl-gap"><input id="sl-interval" type="number" step="1" inputmode="numeric"><span>minutes</span></div>
+                <p class="muted" id="sl-limit-hint"></p>
+                <div class="row">
+                  <button type="button" class="btn-ghost" id="sl-save">Save</button>
+                  <button type="button" class="btn-ghost" id="sl-test">Send me a test</button>
+                </div>
+              </div>
+              <div class="sl-preview" aria-label="Message preview">
+                <div class="sl-phone-h">Preview</div>
+                <div class="sl-phone"><img id="sl-bubble-img" class="sl-bubble-img" alt="Campaign photo" hidden><div class="sl-bubble" id="sl-bubble"></div><div class="sl-bubble" id="sl-bubble-b" hidden></div></div>
+              </div>
+            </div>
+            <label class="sl-drop" id="sl-drop" for="sl-file">
+              <svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-upload"/></svg>
+              <span><b>Upload your sheet</b><small>CSV or Excel with a phone column. Name, shop, city and area are read too. Any other column becomes a variable.</small></span>
+              <input id="sl-file" type="file" accept=".csv,.tsv,.xlsx,.xlsm" class="sr-only">
+            </label>
+            <div id="sl-import"></div>
+            <details class="sl-add">
+              <summary>Add one lead by hand</summary>
+              <form id="sl-add-form" class="sl-add-grid">
+                <label>Name<input id="sl-add-name" maxlength="120" placeholder="Ramesh" autocomplete="off"></label>
+                <label>Shop name<input id="sl-add-shop" maxlength="160" placeholder="Sharma Dry Cleaners" autocomplete="off"></label>
+                <label>WhatsApp number<input id="sl-add-phone" maxlength="20" inputmode="tel" placeholder="98765 43210" autocomplete="off"></label>
+                <label>City<input id="sl-add-city" maxlength="80" placeholder="Varanasi" autocomplete="off"></label>
+                <label>Area<input id="sl-add-area" maxlength="120" placeholder="Lanka" autocomplete="off"></label>
+                <label class="sl-add-note">Note for AI <small class="muted">optional</small><input id="sl-add-note" maxlength="300" placeholder="Talked on call, interested in Solo Pro" autocomplete="off"></label>
+                <button type="submit" class="btn-primary">Add lead</button>
+              </form>
+              <p class="muted sl-small">A lead added here gets the first message within a few minutes (10 AM to 7 PM), even if the campaign is paused. AI answers their replies, and sends one follow-up if they stay quiet for a day.</p>
+            </details>
+          </div>
+        </div>
+        </details>
+        <div class="panel sl-today">
+          <div class="panel-h"><b>Needs you</b><span class="muted" id="sl-calls-n"></span></div>
+          <div class="sl-today-n" id="sl-today" role="group" aria-label="Jump to leads"></div>
+          <div id="sl-calls"></div>
+        </div>
+        <div id="sl-insights" class="sl-insights"></div>
+        <div class="sl-leads-h" id="sl-leads-top">
+          <h3 class="sec-h">Leads</h3>
+          <div class="sl-leads-tools">
+            <select id="sl-city" aria-label="City"></select>
+            <input id="sl-q" type="search" placeholder="Search shop, area or number" aria-label="Search leads">
+            <button type="button" class="btn-ghost" id="sl-export">Export CSV</button>
+          </div>
+        </div>
+        <div class="sl-chips" id="sl-chips" role="group" aria-label="Filter leads"></div>
+        <div id="sl-leads" class="sl-leads"></div>
+        <div id="sl-leads-more" class="sl-leads-more" aria-live="polite"></div>
+      </section>
+
+      <section class="view" id="view-health" aria-labelledby="health-h" hidden>
+        <h3 class="sr-only" id="health-h">Server health</h3>
+        <div id="health-banner" class="banner" role="status"></div>
+        <div class="toolbar">
+          <span class="muted" id="hl-updated"></span>
+          <span class="grow"></span>
+          <label class="inline"><input type="checkbox" id="hl-live" checked> Live every 5 s</label>
+          <button type="button" id="btn-hl-refresh">↻ Refresh</button>
+          <button type="button" id="btn-wa">🩺 WhatsApp check</button>
+        </div>
+        <div class="hgrid" id="health-grid"></div>
+      </section>
+
+      <!-- ---------- Audit ---------- -->
+      <section class="view" id="view-audit" aria-labelledby="audit-h" hidden>
+        <h3 class="sr-only" id="audit-h">Audit log</h3>
+        <div class="toolbar">
+          <label class="sr-only" for="audit-tenant">Filter audit by tenant slug</label>
+          <input id="audit-tenant" type="search" placeholder="Tenant slug (blank = all)">
+          <button type="button" id="btn-audit-filter">Filter</button>
+          <button type="button" id="btn-export-audit">⬇ CSV</button>
+        </div>
+        <div class="tbl-wrap" id="audit-wrap">
+          <table id="audit" class="stack">
+            <caption class="sr-only">Audit log</caption>
+            <thead><tr>
+              <th scope="col">When</th><th scope="col">Tenant</th><th scope="col">Actor</th>
+              <th scope="col">Action</th><th scope="col">Details</th><th scope="col">Result</th>
+            </tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+        <div class="toolbar"><button type="button" id="btn-audit-more" class="hidden">Load more</button></div>
+      </section>
+
+      <!-- ---------- Settings ---------- -->
+      <section class="view" id="view-settings" aria-labelledby="keys-h" hidden>
+        <h3 class="sec-h" id="aiuse-h">AI usage and cost <span class="muted">— real calls and tokens, no estimate</span></h3>
+        <div class="panel aiu" id="aiuse-box" aria-labelledby="aiuse-h"></div>
+        <h3 class="sec-h">Maintenance</h3>
+        <div class="tool-grid">
+          <div class="panel tool">
+            <b>💾 Backup</b>
+            <p class="muted">Dump the database now, then verify it restores. Runs nightly too.</p>
+            <button type="button" id="btn-backup">Run backup now</button>
+          </div>
+          <div class="panel tool">
+            <b>🧹 Subscriptions</b>
+            <p class="muted">Close expired trials, mark unpaid plans past due and send reminders.</p>
+            <button type="button" id="btn-sweep">Run sweep + dunning</button>
+          </div>
+          <div class="panel tool" id="wa-sync-box" aria-live="polite">
+            <b>📱 WhatsApp history</b>
+            <p class="muted">Full history makes each connected number load a year of chats into server memory. The app never reads it.</p>
+            <label class="inline"><input type="checkbox" id="wa-sync-on"> Full history for newly connected numbers</label>
+            <small class="muted" id="wa-sync-sessions">Loading…</small>
+            <div class="wa-sync-btns">
+              <button type="button" id="btn-wa-sync-save">Save</button>
+              <button type="button" id="btn-wa-sync-apply" hidden></button>
+            </div>
+          </div>
+          <div class="panel tool">
+            <b>⌨ Shortcuts</b>
+            <p class="muted"><span class="kbd">Ctrl K</span> commands · <span class="kbd">/</span> search tenants · <span class="kbd">j</span>/<span class="kbd">k</span> move · <span class="kbd">Enter</span> open · <span class="kbd">Esc</span> close</p>
+          </div>
+        </div>
+        <h3 class="sec-h" id="keys-h">Admin keys <span class="muted">— rotate: create new, revoke old</span></h3>
+        <div class="toolbar"><button type="button" id="btn-new-key">＋ New key</button></div>
+        <div class="tbl-wrap" id="keys-wrap">
+          <table id="keys" class="stack">
+            <caption class="sr-only">Per-admin API keys</caption>
+            <thead><tr>
+              <th scope="col">Label</th><th scope="col">Level</th><th scope="col">Created</th>
+              <th scope="col">Last used</th><th scope="col">Status</th><th scope="col">Actions</th>
+            </tr></thead>
+            <tbody id="keys-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<aside id="sl-drawer" class="sl-drawer" aria-label="Lead conversation" hidden>
+  <header class="sl-d-h">
+    <div class="grow"><b id="sl-d-name"></b><small id="sl-d-sub"></small></div>
+    <button type="button" class="btn-ghost btn-sm" id="sl-d-close" aria-label="Close">✕</button>
+  </header>
+  <div id="sl-d-info" class="sl-d-info"></div>
+  <div id="sl-d-chat" class="sl-chat" aria-live="polite"></div>
+  <form id="sl-d-form" class="sl-d-form">
+    <button type="button" class="sl-link" id="sl-d-suggest">✨ Suggest a reply</button>
+    <div class="sl-d-send">
+      <textarea id="sl-d-text" rows="2" maxlength="1000" placeholder="Write yourself. AI stops on this lead." aria-label="Your reply"></textarea>
+      <button type="submit" class="btn-primary">Send</button>
+    </div>
+  </form>
+</aside>
+<div id="sl-d-ov" class="sl-d-ov" hidden></div>
+<div id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
+<p id="live" class="sr-only" role="status" aria-live="polite"></p>
+
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="sheet" id="modal"></div>
+</div>
+
+<div class="ov" id="palette-ov" hidden role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="sheet sheet-plain">
+    <label class="sr-only" for="palette-input">Type a command or tenant name</label>
+    <input id="palette-input" type="text" placeholder="Type a command or tenant name…"
+           autocomplete="off" role="combobox" aria-expanded="true"
+           aria-controls="palette-list" aria-activedescendant="">
+    <ul id="palette-list" role="listbox" aria-label="Commands"></ul>
+  </div>
+</div>
+
+<script src="/admin/static/campaign-shared.js?v=__V__" defer></script>
+<script src="/admin/static/kk-passkey.js?v=__V__" defer></script>
+<script src="/admin/static/control.js?v=__V__" defer></script>
+</body>
+</html>

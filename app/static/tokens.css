@@ -1,0 +1,155 @@
+/* Kwik Klin — ek hi design language, teenon surface ke liye.
+ *
+ * /admin, /staff, /control aur standalone pages (join, welcome, billing,
+ * invite) sab isi file ko padhte hain. Isse pehle teen alag design the:
+ * teen alag brand rang, teen alag font
+ * stack, teen alag tap size — ek hi product mein.
+ *
+ * DO USOOL:
+ *
+ * 1. Rang JAANKARI hai, sajawat nahi. Har status ka apna rang, aur wo
+ *    matlab teenon surface par ek hi rehta hai. Electric blue sirf EK kaam
+ *    ke liye: jo cheez dabani hai, ya jahan aap abhi ho.
+ *
+ * 2. Yahan sirf wo token hain jo do se zyada jagah kaam aate hain. Har
+ *    chhoti value ka variable banane se file badi hoti hai aur design
+ *    system nahi banta — sirf indirection banti hai.
+ *
+ * Surface apne khud ke variable rakh sakte hain (staff panel ke pickup/
+ * wash/deliver spines jaise), par wo inhi tokens se bane hone chahiye.
+ */
+
+:root {
+  /* ── Brand ──────────────────────────────────────────────────────────
+   * Navy + electric blue: premium SaaS identity. Contrast naapa hua hai,
+   * andaaze se nahi:
+   *   --brand         4.50:1 safed par — accent, active state, link
+   *   --brand-strong  5.56:1 — safed text isi ke upar baithta hai (button)
+   *   --brand-on-navy 7:1+ navy par — sidebar/header ke andar ka accent
+   */
+  --brand: #2f6bff;          /* pehchan: active state, accent           */
+  --brand-strong: #1f5af0;   /* safed text iske upar                    */
+  --brand-ink: #1a45c4;      /* neela TEXT halke background par         */
+  --brand-soft: #eef4ff;     /* halka neela background                  */
+  --brand-line: #cfe0ff;     /* --brand-soft ke chaaron taraf ki lakeer */
+  --brand-on-navy: #8db3ff;
+  --brand-grad: linear-gradient(135deg, #4d86ff 0%, var(--brand-strong) 100%);
+
+  /* ── Surface aur siyahi ────────────────────────────────────────────
+   * Kaala nahi, neeli-slate siyahi — dhoop mein kam chubhti hai. Ye staff
+   * panel se aaye hain, jo is app ki sabse saaf-likhi CSS hai. */
+  --bg: #f5f7fc;             /* page ka kaagaz                          */
+  --surface: #ffffff;        /* card, sheet, row                        */
+  --border: #e4e9f2;         /* asli lakeer                             */
+  --border-soft: #eff2f7;    /* row ke beech ki halki lakeer            */
+
+  --ink: #0e1630;            /* mukhya text                             */
+  --ink-2: #46506a;          /* dooja darja: label, sub-heading         */
+  --ink-3: #667089;          /* muted: hint, meta, timestamp            */
+  --on-brand: #ffffff;       /* --brand-strong ke upar ka text          */
+
+  /* Gehri patti — header, bottom sheet, dark panel. Teen halke-alag dark
+   * chal rahe the (#0d1526 / #131820 / #111827); ab ek. */
+  --ink-plate: #0a1128;
+
+  /* Navy patti, sidebar aur bada card; electric blue dabane wali cheez;
+   * sunehra sirf Pro/premium ke nishaan ke liye. */
+  --navy-deep: #0a1128;
+  --navy: #14224f;
+  --navy-soft: #e8eefc;
+  --gold: #f7c04a;
+  --gold-ink: #7a4d00;
+  --plate-grad: linear-gradient(120deg, var(--navy-deep), var(--navy));
+  --side-grad: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+
+  /* ── Status ────────────────────────────────────────────────────────
+   * Ye sirf theme nahi, LABEL hain: patti ka rang dekh kar hi pata chale
+   * ki kaam kis haal mein hai, bina padhe. Har rang ka apna halka
+   * background bhi, taaki badge banane ke liye kisi ko naya rang na
+   * gadhna pade. */
+  --success: #15803d;  --success-soft: #ecfdf5;   /* taiyar, chukta      */
+  --warning: #b45309;  --warning-soft: #fffbeb;   /* pahunchana, baaki   */
+  --error:   #be123c;  --error-soft:   #fff1f2;   /* late, galti         */
+  --info:    #4f46e5;  --info-soft:    #eef2ff;   /* lene jaana          */
+  --busy:    #0d9488;   /* dhulai chal rahi    */
+
+  /* ── Type ──────────────────────────────────────────────────────────
+   * Poppins 400/600/700 — pehle 5 weight load hote the (400,500,600,700,
+   * 800) jabki 500 poore app mein EK jagah use hota hai. Load blocking
+   * nahi hai (media=print + onload), isliye system stack fallback sach
+   * mein dikhta hai jab tak font aata hai — usme napa-tula farq ho, isliye
+   * fallback wahi hai jo staff panel pehle se use karta hai. */
+  /* Inter (UI v2): drawn for screens, with tabular figures for the money
+   * columns. Same three weights plus 500. */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  /* Staff panel jaan-boojh kar webfont NAHI utaarta: wo app 3G par, sasti
+   * screen par, dukaan ke aadmi ke phone par chalti hai. Uske liye alag
+   * token — taaki wo faisla galti se "sab jagah Poppins" karte waqt na
+   * mit jaye. --font ka fallback bhi yahi stack hai, isliye jab tak
+   * Poppins aata hai dono ek jaise dikhte hain. */
+  --font-system: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+
+  --fw-semi: 600;
+  --fw-bold: 700;
+
+  /* ── Space ─────────────────────────────────────────────────────────
+   * Ek hi seedhi: 4 se shuru, 8 ke gunak. Beech ki value chunni pade to
+   * layout galat hai, token nahi. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ── Type scale ────────────────────────────────────────────────────*/
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+
+  /* ── Radius ────────────────────────────────────────────────────────*/
+  --r-sm: 8px;
+  --r-md: 10px;      /* default: button, input                          */
+  --r-lg: 14px;      /* card, sheet                                     */
+  --r-xl: 20px;      /* hero card, bottom sheet                         */
+  --r-pill: 999px;   /* chip, badge                                     */
+
+  /* ── Shadow ────────────────────────────────────────────────────────
+   * Navy-tinted: kaali shadow white par gandi lagti hai. --shadow-lg sirf
+   * modal/popover ke liye. --ring har focus ka ek hi nishaan. */
+  --shadow-sm: 0 1px 2px rgba(14, 22, 48, .05), 0 1px 3px rgba(14, 22, 48, .04);
+  --shadow-md: 0 4px 12px -2px rgba(14, 22, 48, .08), 0 2px 4px rgba(14, 22, 48, .04);
+  --shadow-lg: 0 24px 56px -12px rgba(14, 22, 48, .28), 0 4px 12px rgba(14, 22, 48, .08);
+  --shadow-brand: 0 8px 20px -6px rgba(31, 90, 240, .5);
+  --ring: 0 0 0 3px rgba(47, 107, 255, .22);
+
+  /* ── Motion ────────────────────────────────────────────────────────*/
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur: .16s;
+
+  /* ── Layout ────────────────────────────────────────────────────────*/
+  --content-max: 1180px;
+  --sidebar-w: 232px;
+  /* Sabse chhota tap target. Ye geele haath aur dhoop wali screen ke liye
+   * hai, kisi guideline ke minimum ke liye nahi — isliye 44 nahi, 46. */
+  --tap: 46px;
+  --control-h: 40px;   /* chhote button, chip                           */
+}
+
+/* ─── Touch screens: har surface par ek hi niyam ─────────────────────────
+   16px se chhote khaane par focus karte hi iPhone Safari poora page zoom kar
+   deta hai, aur wahi "screen uchhal gayi" lagta hai — isliye !important, warna
+   .kb input jaise rules jeet jaate hain. Chhote button ungli se chhoot jaate
+   the; jagah sirf touch par badhti hai, mouse wala layout waisa hi. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select, textarea { font-size: 16px !important; }
+  .btn.sm, .btn.ghost, .chip, .kb-btn.sm, .kb-slots button, .kb-chips button, .kb-seg button { min-height: 40px; }
+  .gr-x, .gr-info { min-width: 40px; min-height: 40px; }
+  .kb-sw, .nbw-tgl { position: relative; }
+  .kb-sw::before, .nbw-tgl::before { content: ""; position: absolute; inset: -10px -4px; }
+}

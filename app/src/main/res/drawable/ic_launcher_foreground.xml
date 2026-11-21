@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Crisp Electric Blue Badge -->
+    <path
+        android:fillColor="#2F6BFF"
+        android:pathData="M34,30h40c4.4,0 8,3.6 8,8v32c0,4.4 -3.6,8 -8,8H34c-4.4,0 -8,-3.6 -8,-8V38c0,-4.4 3.6,-8 8,-8z" />
+    <!-- Laundry Drum Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,42c6.6,0 12,5.4 12,12s-5.4,12 -12,12 -12,-5.4 -12,-12 5.4,-12 12,-12z" />
+    <!-- Water Wave inside Drum -->
+    <path
+        android:fillColor="#2F6BFF"
+        android:pathData="M44.5,55c2.2,-2.2 5.2,-2.2 7.5,0 2.3,2.2 5.3,2.2 7.5,0 1.4,-1.4 2.5,-0.5 2.5,1 0,4.5 -3.6,8 -8,8s-8,-3.5 -8,-8c0,-1.5 0.5,-1 0.5,-1z" />
+    <!-- Sparkle Gold Accent -->
+    <path
+        android:fillColor="#F7C04A"
+        android:pathData="M72,36l1.5,3.5L77,41l-3.5,1.5L72,46l-1.5,-3.5L67,41l3.5,-1.5z" />
+</vector>

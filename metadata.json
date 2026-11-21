@@ -1,0 +1,8 @@
+{
+  "name": "Kwik Klin",
+  "description": "Laundry & Dry Cleaning CRM for Android — Orders, Fast Bill Wizard, Customers, Rate Card, Staff Tasks, and Expense Tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

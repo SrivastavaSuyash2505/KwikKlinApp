@@ -1,0 +1,24 @@
+/* WhatsApp passkey step (kk-passkey.js) — admin, owner app, control panel.
+   Saare rang tokens.css se; har page wo pehle hi load karta hai. */
+.kkpk { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--brand-line, #cfe0ff);
+  border-radius: 14px; background: var(--brand-soft, #eef4ff); color: var(--ink, #0e1630); max-width: 520px; }
+.kkpk h4 { margin: 0; font-size: 16px; }
+.kkpk p { margin: 0; line-height: 1.45; }
+.kkpk .kkpk-muted { color: var(--ink-3, #667089); font-size: 13px; }
+.kkpk .kkpk-err { color: #b42318; font-size: 14px; }
+.kkpk .kkpk-ok { color: #067647; font-weight: 600; }
+.kkpk-btn { appearance: none; border: 0; border-radius: 10px; padding: 11px 16px; font: inherit; font-weight: 600;
+  background: var(--brand-strong, #1f5af0); color: var(--on-brand, #fff); cursor: pointer; min-height: 44px; }
+.kkpk-btn.ghost { background: var(--surface, #fff); color: var(--brand-ink, #1a45c4); border: 1px solid var(--brand-line, #cfe0ff); }
+.kkpk-btn:disabled { opacity: .55; cursor: default; }
+.kkpk-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.kkpk a { color: var(--brand-ink, #1a45c4); font-weight: 600; }
+.kkpk-code { font-size: 34px; font-weight: 700; letter-spacing: .25em; text-align: center; padding: 8px;
+  background: var(--surface, #fff); border-radius: 10px; }
+.kkpk ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.kkpk details { background: var(--surface, #fff); border-radius: 10px; padding: 10px 12px; }
+.kkpk summary { cursor: pointer; font-weight: 600; }
+.kkpk details[open] summary { margin-bottom: 8px; }
+.kkpk textarea { width: 100%; box-sizing: border-box; min-height: 90px; font: 12px/1.4 ui-monospace, monospace;
+  border: 1px solid var(--brand-line, #cfe0ff); border-radius: 8px; padding: 8px; }
+.kkpk code { background: var(--surface, #fff); padding: 1px 5px; border-radius: 4px; }

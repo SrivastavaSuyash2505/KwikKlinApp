@@ -1,0 +1,17 @@
+{
+  "id": "/control",
+  "name": "Kwik Klin Control",
+  "short_name": "KK Control",
+  "description": "Vendor panel: shops, billing, WhatsApp leads and server health.",
+  "start_url": "/control",
+  "scope": "/control",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6fb",
+  "theme_color": "#0c1430",
+  "icons": [
+    {"src": "/control/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/control/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/control/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

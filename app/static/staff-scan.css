@@ -1,0 +1,100 @@
+/* Staff app scan screen (staff-scan.js).
+ * Phone: ek column, angoothe ke paas bade button.
+ * Tablet (>=640px): camera/input baayein, nateeja daayein.
+ * CSP: style-src 'self' — sab yahin, markup mein koi style="" nahi. */
+
+/* minmax(0,1fr): grid column apne content (lamba code, 5 station) jitna
+   na phaile — warna phone par Find button screen se bahar */
+.ss { padding: 12px clamp(12px, 4vw, 18px) 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.ss-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.ss > *, .ss-grid > * { min-width: 0; }
+.ss-left, .ss-right { display: grid; gap: 12px; align-content: start; min-width: 0; }
+
+.ss-stations { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.ss-stations button { flex: none; min-height: 42px; padding: 0 16px; border-radius: 99px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-2); font-weight: 700; font-size: 14px; }
+.ss-stations button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ss-hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+
+.ss-cam { position: relative; border-radius: 18px; overflow: hidden; background: #0f141b; color: #fff; aspect-ratio: 4 / 3; max-height: 46vh; display: grid; }
+.ss-cam video { width: 100%; height: 100%; object-fit: cover; grid-area: 1 / 1; }
+.ss-cam.live::after { content: ""; position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #ef4444; box-shadow: 0 0 14px #ef4444; animation: ssScan 1.6s ease-in-out infinite alternate; }
+@keyframes ssScan { from { transform: translateY(-40px); } to { transform: translateY(40px); } }
+.ss-cam-off { grid-area: 1 / 1; display: grid; place-content: center; justify-items: center; gap: 6px; text-align: center; padding: 18px; }
+.ss-cam-off b { font-size: 16px; }
+.ss-cam-off small { color: rgba(255,255,255,.65); font-size: 13px; max-width: 280px; }
+.ss-cam-off .btn { margin-top: 8px; min-height: 48px; padding: 0 22px; }
+.ss-cam-ic { font-size: 34px; opacity: .8; }
+.ss-cam.nocam { aspect-ratio: auto; background: var(--bg); color: var(--ink); border: 1.5px dashed var(--border); }
+.ss-cam.nocam small { color: var(--ink-3); }
+.ss-cam-x { position: absolute; top: 10px; right: 10px; width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(0,0,0,.55); color: #fff; font-size: 16px; z-index: 1; }
+
+.ss-input { display: flex; gap: 8px; padding: 5px 5px 5px 14px; border: 2px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ss-input:focus-within { border-color: var(--brand); }
+.ss-input input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: 600 16px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .02em; padding: 10px 0; color: var(--ink); }
+.ss-input .btn { min-height: 46px; border-radius: 12px; }
+
+.ss-card { border-radius: 16px; border: 1px solid var(--border); background: var(--surface); padding: 14px; }
+.ss-idle { color: var(--ink-3); font-size: 14px; border-style: dashed; background: var(--bg); text-align: center; padding: 22px 14px; }
+.ss-err { background: var(--error-soft); border-color: color-mix(in srgb, var(--error) 35%, transparent); color: var(--error); }
+.ss-err p { margin: 4px 0 0; color: var(--ink); }
+.ss-hit.pulse { animation: ssPulse .6s ease-out; }
+@keyframes ssPulse { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 45%, transparent); } to { box-shadow: 0 0 0 14px transparent; } }
+.ss-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ss-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--success); }
+.ss-what { font-size: 22px; font-weight: 800; color: var(--ink); margin-top: 4px; }
+.ss-meta { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.ss-urg { color: var(--error); }
+
+.st-RECEIVED { --c: var(--ink-3); }
+.st-WASH { --c: #0284c7; }
+.st-IRON { --c: var(--brand); }
+.st-QC { --c: var(--info); }
+.st-PACKED { --c: var(--success); }
+.ss-pill { font-size: 12px; font-weight: 800; padding: 5px 11px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+
+.ss-steps { list-style: none; display: flex; gap: 4px; padding: 0; margin: 14px 0 6px; }
+.ss-steps li { flex: 1 1 0; display: grid; justify-items: center; gap: 4px; font-size: 11px; color: var(--ink-3); }
+.ss-steps li span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); }
+.ss-steps li.done span { background: var(--success-soft); border-color: var(--success); }
+.ss-steps li.cur { color: var(--ink); font-weight: 800; }
+.ss-steps li.cur span { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 4px var(--brand-soft); }
+
+.ss-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.ss-move { min-height: 56px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font-weight: 800; font-size: 16px; }
+.ss-move:active { transform: scale(.97); }
+.ss-move.pri { grid-column: 1 / -1; background: var(--ink); border-color: var(--ink); color: #fff; min-height: 60px; font-size: 17px; }
+.ss-move.back { border-style: dashed; color: var(--warning); font-size: 14px; }
+.ss-order { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-soft, var(--border)); font-size: 13px; color: var(--ink-2); }
+.ss-sibs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.ss-sibs button { min-height: 30px; padding: 0 8px; border: 0; border-radius: 7px; font-size: 12px; font-weight: 800; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.ss-sibs button.me { outline: 2px solid var(--c); }
+.ss-done { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--success-soft); color: var(--success); font-weight: 700; font-size: 14px; }
+
+.ss-log { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.ss-log i { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 800; background: var(--success-soft); color: var(--success); }
+.ss-log.err i { background: var(--error-soft); color: var(--error); }
+.ss-log.same i { background: var(--bg); color: var(--ink-3); }
+.ss-log span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+.ss-log time { color: var(--ink-3); font-size: 12px; }
+
+.ss-board { border-top: 1px solid var(--border); padding-top: 12px; }
+.ss-board-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ss-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+.ss-tabs button { flex: none; min-height: 38px; padding: 0 12px; border-radius: 99px; border: 1.5px solid var(--border); background: var(--surface); font-weight: 700; color: var(--ink-2); }
+.ss-tabs button b { margin-left: 4px; font-size: 12px; }
+.ss-tabs button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ss-items { display: grid; gap: 8px; }
+.ss-item { display: grid; gap: 2px; text-align: left; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border); border-left: 4px solid var(--border); background: var(--surface); }
+.ss-item b { color: var(--ink); font-size: 15px; }
+.ss-item span { color: var(--ink-3); font-size: 12px; }
+.ss-item.urg { border-left-color: var(--error); }
+
+/* tablet: do column — scan baayein, nateeja daayein; board neeche grid */
+@media (min-width: 640px) {
+  .ss-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .ss-cam { max-height: 38vh; }
+  .ss-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 820px) {
+  .ss-items { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

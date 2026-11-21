@@ -1,0 +1,745 @@
+/* Kwik Klin — New Bill (dashboard + staff app), kk-bill.js ke saath.
+ *
+ * v3 look (docs/LAUNDRY_ORDER_BILLING_UI_PROMPT.md): gradient step strip,
+ * service ka rang-parivaar ([data-fam]: wash teal · fold blue · iron amber ·
+ * dry violet · home pink), 2-column kapde tiles jinpar ADD / − n +, bade
+ * "kahan hain kapde" cards, switch, aur neeche patti mein Back + Next.
+ *
+ * Layout jagah dekh kar badalta hai (container query), screen nahi — staff
+ * app 780px par ruka hai, dashboard ke saath sidebar hai; dono ko sahi milta hai.
+ *   < 720px     phone: ek waqt ek step, neeche patti mein "Next"
+ *   720-1099    tablet: baayein step (grahak / kapde), daayein bill hamesha
+ *   >= 1100     desktop: teeno ek saath — grahak | kapde | bill
+ * Rang sirf tokens.css se + yahan ke 5 parivaar. Koi image nahi, icon ek chhoti SVG sprite.
+ */
+
+/* Rang-parivaar aur gradient :root par bhi — dashboard ki neeche wali patti aur
+   modal .kb ke BAHAR hain; sirf .kb par hote to wahan var() khali = button bina rang */
+:root, .kb {
+  --kb-grad: linear-gradient(135deg, #2c3f86 0%, var(--navy) 50%, var(--navy-deep) 100%);
+  --kb-wash: #0d9488; --kb-wash-soft: #ccfbf1; --kb-fold: #2563eb; --kb-fold-soft: #dbeafe;
+  --kb-iron: #d97706; --kb-iron-soft: #fef3c7; --kb-dry: #7c3aed; --kb-dry-soft: #ede9fe;
+  --kb-home: #db2777; --kb-home-soft: #fce7f3; --kb-gold: #ca8a04; --kb-gold-soft: #fef9c3;
+  --kb-wa: #25d366; --c: var(--brand-strong); --c-soft: var(--brand-soft); }
+.kb { container-type: inline-size; container-name: kb; min-width: 0; color: var(--ink); }
+.kb *, .kb *::before, .kb *::after { box-sizing: border-box; }
+/* display:flex wale khaane [hidden] ko hara dete the: "Customer saves −₹0",
+   band urgent ke khaane, sab dikhte rehte the */
+.kb [hidden], .nbw [hidden] { display: none !important; }
+.kb button { touch-action: manipulation; }
+[data-fam="wash"] { --c: var(--kb-wash); --c-soft: var(--kb-wash-soft); }
+[data-fam="fold"] { --c: var(--kb-fold); --c-soft: var(--kb-fold-soft); }
+[data-fam="iron"] { --c: var(--kb-iron); --c-soft: var(--kb-iron-soft); }
+[data-fam="dry"]  { --c: var(--kb-dry);  --c-soft: var(--kb-dry-soft); }
+[data-fam="home"] { --c: var(--kb-home); --c-soft: var(--kb-home-soft); }
+
+/* ---------- patti 1-2-3-4 (gradient header) ---------- */
+.kb-steps { list-style: none; margin: 0 0 12px; padding: 12px 14px 12px; display: flex; align-items: center; gap: 6px;
+  background: var(--kb-grad); color: #fff; border: 0; border-radius: var(--r-lg); position: relative; overflow: hidden;
+  box-shadow: 0 10px 24px -14px rgba(20, 34, 79, .55); }
+.kb-steps::after { content: ""; position: absolute; right: -50px; top: -70px; width: 170px; height: 170px; border-radius: 50%; background: rgba(255, 255, 255, .12); pointer-events: none; }
+.kb-step { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; }
+.kb-step:not(:last-child)::after { content: ""; flex: 1 1 auto; height: 3px; min-width: 10px; border-radius: 2px; background: rgba(255, 255, 255, .3); }
+.kb-step.ok:not(:last-child)::after { background: rgba(255, 255, 255, .85); }
+.kb-step button { display: flex; align-items: center; gap: 8px; padding: 2px; border: 0; background: none; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+.kb-step button:disabled { cursor: default; }
+.kb-step i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 13px;
+  background: rgba(255, 255, 255, .22); color: #fff; border: 1.5px solid rgba(255, 255, 255, .5); }
+.kb-step.on i { background: #fff; border-color: #fff; color: var(--brand-strong); box-shadow: 0 0 0 4px rgba(255, 255, 255, .25); }
+.kb-step.ok i { background: rgba(255, 255, 255, .9); border-color: #fff; color: var(--brand-strong); }
+.kb-step span { display: none; min-width: 0; }
+.kb-step b { display: block; font-size: 13.5px; white-space: nowrap; }
+.kb-step small { display: block; font-size: 11.5px; color: rgba(255, 255, 255, .85); white-space: nowrap; }
+
+/* ---------- panes ---------- */
+.kb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.kb-pane { display: none; min-width: 0; }
+.kb[data-step="1"] .kb-p1, .kb[data-step="2"] .kb-p2, .kb[data-step="3"] .kb-p3 { display: block; }
+.kb[data-step="4"] .kb-grid, .kb[data-step="4"] .kb-bar { display: none; }
+.kb-donewrap { display: none; }
+.kb[data-step="4"] .kb-donewrap { display: block; }
+.kb-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; min-width: 0; box-shadow: var(--shadow-sm); }
+.kb-card + .kb-card { margin-top: 12px; }
+.kb-card.tint-gold { background: linear-gradient(180deg, var(--kb-gold-soft), var(--surface) 70%); }
+.kb-card.tint-info { background: linear-gradient(180deg, var(--info-soft), var(--surface) 70%); }
+.kb-card.tint-wash { background: linear-gradient(180deg, var(--kb-wash-soft), var(--surface) 70%); }
+.kb-card.urg { border: 2px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--kb-grad) border-box; }
+.kb-h { display: flex; align-items: center; justify-content: space-between; gap: 4px 8px; margin: 0 0 12px; font-size: 15.5px; font-weight: 800; flex-wrap: wrap; }
+.kb-h small { font-weight: 500; font-size: 12.5px; color: var(--ink-3); }
+.kb-sub { margin: 14px 0 6px; font-size: 13px; font-weight: 700; color: var(--ink); display: flex; justify-content: space-between; gap: 8px; }
+.kb-sub small { font-weight: 500; color: var(--ink-3); }
+.kb-hint { margin: 6px 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.kb-note { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--warning-soft); color: var(--warning); font-size: 13px; line-height: 1.45; }
+.kb-note.err { background: var(--error-soft); color: var(--error); }
+.kb-note.info { background: var(--info-soft); color: var(--info); }
+.kb-err { display: block; min-height: 0; margin-top: 4px; font-size: 12.5px; color: var(--error); }
+.kb-err:empty { display: none; }
+.kb-red { color: var(--error); }
+.kb-green { color: var(--success); }
+.kb-mt8 { margin-top: 8px; }
+.kb-mt14 { margin-top: 14px; }
+.kb-semi { font-weight: 600; }
+
+/* ---------- inputs (dono app mein ek jaise) ---------- */
+.kb label.kb-label, .kb .kb-label { display: block; margin: 12px 0 5px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.kb input[type="text"], .kb input[type="tel"], .kb input[type="search"], .kb input[type="number"], .kb input[type="date"],
+.kb select, .kb textarea {
+  width: 100%; min-height: 44px; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; margin: 0;
+}
+.kb textarea { min-height: 70px; resize: vertical; }
+.kb input:focus, .kb select:focus, .kb textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.kb input:disabled { background: var(--bg); color: var(--ink-3); }
+.kb-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.kb-search { position: relative; }
+.kb-search .kb-si { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; margin-top: -9px; color: var(--ink-3); pointer-events: none; }
+.kb-search input { padding-left: 38px !important; border-radius: 14px !important; min-height: 46px !important; }
+.kb-money { display: flex; align-items: center; border: 1.5px solid var(--border); border-radius: var(--r-md); background: var(--surface); }
+.kb-money:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.kb-money span { padding: 0 2px 0 10px; color: var(--ink-3); font-size: 14px; }
+.kb .kb-money input { border: 0 !important; box-shadow: none !important; min-height: 38px; padding: 6px 8px 6px 4px; text-align: right; background: transparent; }
+
+/* ---------- buttons, segmented, switch ---------- */
+.kb-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px;
+  border-radius: 14px; border: 1.5px solid transparent; font: inherit; font-weight: 800; font-size: 14.5px; cursor: pointer; text-decoration: none; }
+.kb-btn.go { background: var(--kb-grad); color: #fff; box-shadow: 0 8px 18px -8px rgba(31, 90, 240, .8); }
+.kb-btn.go:hover { filter: brightness(1.05); }
+.kb-btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--border); }
+.kb-btn.ghost:hover { border-color: var(--brand); }
+.kb-btn.wa { background: var(--kb-wa); color: #fff; }
+.kb-btn.sm { min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.kb-btn.wide { width: 100%; }
+.kb-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.kb-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.kb-row > .kb-btn { flex: 1 1 0; }
+.kb-seg { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 4px; padding: 4px; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--border); }
+.kb-seg button { min-height: 38px; padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--ink-2); font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-seg button.on { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow-sm); border: 1.5px solid var(--brand); }
+.kb-seg.sm button { min-height: 32px; font-size: 12.5px; }
+.kb-link { border: 0; background: none; padding: 4px 0; color: var(--brand-ink); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+/* kahan hain kapde: do bade card */
+.kb-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+.kb-mode button { position: relative; min-height: 86px; padding: 12px; border: 2px solid var(--border); border-radius: var(--r-lg); background: var(--surface);
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.kb-mode button .em { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; background: var(--kb-wash-soft); }
+.kb-mode button[data-ful="pickup"] .em { background: var(--kb-fold-soft); }
+.kb-mode button b { display: block; font-size: 14px; margin-top: 2px; }
+.kb-mode button small { color: var(--ink-3); font-size: 12px; line-height: 1.3; }
+.kb-mode button.on { border-color: var(--brand); background: var(--brand-soft); }
+.kb-mode button:disabled { opacity: .45; cursor: not-allowed; }
+.kb-mode button[hidden] { display: none; }
+.kb-mode.one { grid-template-columns: 1fr; }
+.kb-mode.one button { flex-direction: row; align-items: center; gap: 12px; min-height: 64px; }
+.kb-mode.one button b { margin-top: 0; }
+.kb-locnote { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kb-locnote .kb-btn { margin-left: auto; }
+/* switch (urgent, GST) */
+.kb-switchrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kb-switchrow b { font-size: 14.5px; }
+.kb-switchrow small { display: block; color: var(--ink-3); font-size: 12px; margin-top: 2px; line-height: 1.4; }
+.kb-sw { width: 48px; height: 28px; border-radius: 99px; background: var(--border); border: 0; position: relative; flex: none; cursor: pointer; transition: background .15s; }
+.kb-sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: left .15s; }
+.kb-sw.on { background: var(--brand-strong); }
+.kb-sw.on::after { left: 23px; }
+.kb-sw:focus-visible { box-shadow: 0 0 0 3px var(--brand-soft); outline: none; }
+.kb-switch { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--ink-2); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.kb-switch.on { background: var(--error-soft); border-color: var(--error); color: var(--error); }
+.kb-urgamt { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.kb-urgamt .kb-money { width: 120px; }
+.kb-urgamt small { color: var(--ink-3); font-size: 12px; }
+/* chhote slot chips (tareekh, time, note) */
+.kb-slots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.kb-slots button { min-height: 34px; padding: 0 12px; border-radius: 99px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-2);
+  font: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; }
+.kb-slots button.on { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+
+/* ---------- grahak ---------- */
+.kb-ac { position: relative; }
+.kb-acp { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-md); overflow: hidden auto; overscroll-behavior: contain; max-height: min(48dvh, 340px); }
+.kb-acp:empty { display: none; }
+.kb-acp > div { min-height: 44px; padding: 8px 12px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.kb-acp > div > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.kb-acp > div .due { flex: none; }
+.kb-acp > div:last-child { border-bottom: 0; }
+.kb-acp > div:hover { background: var(--brand-soft); }
+.kb-acp .none { color: var(--ink-3); cursor: default; }
+.kb-acp small { color: var(--ink-3); }
+.kb-acp .due { color: var(--warning); font-weight: 700; font-size: 12px; }
+.kb-cust { display: flex; gap: 12px; align-items: center; margin-top: 12px; padding: 12px; border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--kb-gold-soft), var(--surface) 80%); border: 1px solid var(--border); }
+.kb-cust.owes { background: linear-gradient(180deg, var(--warning-soft), var(--surface) 80%); }
+.kb-av { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--kb-grad); color: #fff; font-weight: 900; font-size: 16px; }
+.kb-cust-tx { flex: 1 1 auto; min-width: 0; }
+.kb-cust-tx b { display: block; font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-cust-tx span { display: block; font-size: 13px; color: var(--ink-2); }
+.kb-cust-tx small { display: block; font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.kb-cust-tx .kb-owes { color: var(--warning); font-weight: 700; }
+.kb-tag { align-self: flex-start; flex: none; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: var(--surface); color: var(--ink-2); border: 1px solid var(--border); }
+.kb-tag.vip { background: var(--kb-gold-soft); color: #92400e; border-color: #fcd34d; }
+.kb-tag.regular { background: var(--kb-wash-soft); color: var(--kb-wash); border-color: transparent; }
+.kb-tag.new { background: var(--kb-home-soft); color: var(--kb-home); border-color: transparent; }
+.kb-cust-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.kb-reward:empty, .kb-usual:empty { display: none; }
+
+/* ---------- kapde: chips + tiles ---------- */
+.kb-tools { display: flex; gap: 8px; }
+.kb-tools .kb-search { flex: 1 1 auto; min-width: 0; }
+.kb-tools .kb-btn { flex: none; white-space: nowrap; min-height: 46px; padding: 0 12px; border-radius: 14px; }
+.kb-chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; margin-top: 10px; scrollbar-width: none; }
+.kb-chips::-webkit-scrollbar { display: none; }
+.kb-chips button { flex: none; min-height: 36px; padding: 0 13px; border-radius: 99px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-2);
+  font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; }
+.kb-chips button.on { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+.kb-chips.svc button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+.kb-chips.svc button.on { background: var(--c); border-color: var(--c); color: #fff; }
+.kb-chips.svc button.on::before { background: #fff; }
+.kb-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.kb-tile { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-width: 0; min-height: 134px; padding: 10px; border-radius: var(--r-lg);
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); font: inherit; text-align: left; }
+button.kb-tile { cursor: pointer; }
+.kb-tile:hover { border-color: var(--c); }
+.kb-tile.in { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.kb-tile-main { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1 1 auto; min-width: 0; border: 0; background: none; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.kb-gi { width: 40px; height: 40px; padding: 8px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, var(--surface)); flex: none; }
+.kb-tile b { font-size: 14px; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-tile small { font-size: 11.5px; color: var(--ink-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-tile em { font-style: normal; font-size: 13.5px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kb-tile em s { color: var(--ink-3); font-weight: 500; }
+.kb-tile em .kb-sv { font-size: 10.5px; color: var(--success); background: var(--success-soft); border-radius: 99px; padding: 1px 6px; font-weight: 800; }
+.kb-tile .kb-n { position: absolute; top: 10px; right: 10px; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 99px; display: grid; place-items: center;
+  background: var(--c); color: #fff; font-size: 12px; font-weight: 900; z-index: 1; }
+.kb-tile.add { border-style: dashed; color: var(--brand-ink); justify-content: center; align-items: center; text-align: center; min-height: 120px; }
+.kb-tile.add .kb-gi { color: var(--brand-ink); background: var(--brand-soft); }
+.kb-add { height: 38px; margin-top: auto; border: 1.5px solid var(--success); color: var(--success); background: var(--success-soft); border-radius: 12px;
+  font: inherit; font-weight: 900; letter-spacing: .04em; font-size: 13px; cursor: pointer; }
+.kb-tq { display: flex; align-items: center; margin-top: auto; height: 38px; border: 1.5px solid var(--success); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.kb-tq button { flex: 1 1 0; height: 100%; border: 0; background: transparent; color: var(--success); font: inherit; font-size: 20px; font-weight: 800; line-height: 1; cursor: pointer; }
+.kb-tq output { min-width: 34px; text-align: center; font-weight: 900; color: var(--success); font-variant-numeric: tabular-nums; }
+.kb-empty { grid-column: 1 / -1; padding: 18px 10px; text-align: center; color: var(--ink-3); font-size: 13px; background: var(--bg); border-radius: var(--r-md); }
+/* search dropdown ki row: icon · naam/service · daam · ✓ */
+.kb-opt { justify-content: flex-start !important; }
+.kb-opt.at, .kb-opt:hover { background: var(--brand-soft); }
+.kb-opt .kb-gi { width: 30px; height: 30px; padding: 5px; flex: none; }
+.kb-opt-t { flex: 1 1 auto; min-width: 0; }
+.kb-opt-t b { display: block; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.kb-opt-t small { display: block; font-size: 12px; color: var(--ink-3); }
+.kb-opt em { flex: none; font-style: normal; font-weight: 800; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.kb-opt > i { flex: none; font-style: normal; font-weight: 900; color: var(--success); }
+/* ⭐ Usually given: chuna hua = bhara chip + ×; sujhaav = dashed + ＋ */
+.kb-usual { margin-top: 10px; padding: 10px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--border)); background: color-mix(in srgb, var(--brand) 7%, var(--surface)); }
+.kb-uh { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; }
+.kb-uh-t { font-size: 13.5px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.kb-uh-b { display: flex; gap: 6px; margin-left: auto; }
+.kb-ucs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.kb-ucs .kb-hint { margin: 0; }
+.kb-uc { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 44px; padding: 3px 10px; border-radius: 12px; border: 1.5px dashed var(--brand);
+  background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.kb-uc > i { flex: none; font-style: normal; font-weight: 800; color: var(--brand); }
+.kb-uc-t { min-width: 0; display: block; line-height: 1.2; }
+.kb-uc-t b { display: block; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.kb-uc-t small { display: block; font-size: 11px; color: var(--ink-3); }
+.kb-uc.on { padding-right: 0; border-style: solid; border-color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, var(--surface)); cursor: default; }
+.kb-uc-x { flex: none; width: 36px; height: 38px; margin-left: -4px; border: 0; border-radius: 10px; background: none; color: var(--ink-2); font-size: 20px; line-height: 1; cursor: pointer; }
+.kb-uc-x:hover { background: var(--error-soft); color: var(--error); }
+.kb-uadd { display: grid; gap: 6px; margin-top: 8px; }
+.kb-uadd .kb-search input { padding-left: 12px !important; }
+.kb-uadd .kb-acp { position: relative; top: auto; z-index: 0; max-height: 248px; box-shadow: none; }
+
+/* ---------- jode hue kapde ---------- */
+.kb-items { margin-top: 12px; }
+.kb-items-h { display: none; }
+.kb-it { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--border-soft); }
+.kb-it:first-of-type { border-top: 0; }
+.kb-it .kb-gi { width: 32px; height: 32px; padding: 6px; border-radius: 10px; }
+.kb-it-n { min-width: 0; }
+.kb-it-n b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-it-n small { display: block; font-size: 12px; color: var(--ink-3); }
+.kb-it-n button { border: 0; background: none; padding: 0; color: var(--brand-ink); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.kb-it-n button.changed { color: var(--warning); }
+.kb-it-amt { font-weight: 800; font-size: 14px; text-align: right; min-width: 56px; font-variant-numeric: tabular-nums; }
+.kb-it-x { grid-column: 4; }
+.kb-qty { display: inline-flex; align-items: center; border: 1.5px solid var(--success); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.kb-qty button { width: 32px; height: 34px; border: 0; background: var(--success-soft); color: var(--success); font-size: 17px; font-weight: 800; cursor: pointer; }
+.kb .kb-qty input { width: 44px; min-height: 34px; padding: 0 2px; border: 0 !important; border-radius: 0; text-align: center; font-weight: 800; box-shadow: none !important; -moz-appearance: textfield; }
+.kb .kb-qty input::-webkit-outer-spin-button, .kb .kb-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.kb-del { width: 34px; height: 34px; border: 0; border-radius: 9px; background: none; color: var(--error); cursor: pointer; font-size: 15px; }
+.kb-del:hover { background: var(--error-soft); }
+.kb-it-more { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-3); }
+.kb-it-more .kb-money { width: 130px; }
+.kb-it-more button { border: 0; background: none; padding: 2px 0; color: var(--brand-ink); font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer; }
+/* kadam 3 ka saar: kaun se kapde (rang ka dot) */
+.kb-recap { display: grid; gap: 0; }
+.kb-recap .ln { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--border-soft); font-size: 13.5px; }
+.kb-recap .ln:first-child { border-top: 0; }
+.kb-recap .ln > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kb-recap .ln i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: none; }
+.kb-recap .ln small { display: block; color: var(--ink-3); font-size: 11.5px; }
+.kb-recap .ln small s { color: var(--ink-3); }
+.kb-recap .ln b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- bill summary ---------- */
+.kb-sum-row { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 7px 0; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }
+.kb-sum-row > b, .kb-sum-row > span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
+.kb-sum-row .kb-ctl { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+.kb-sum-row .kb-money { width: 104px; }
+.kb-sum-row.neg > b { color: var(--success); }
+.kb .kb-sum-row select { width: auto; min-height: 38px; padding: 6px 28px 6px 10px; font-size: 14px; }
+.kb-total { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px; padding: 12px 14px; border-radius: var(--r-md);
+  background: var(--brand-soft); color: var(--brand-ink); font-weight: 800; border-top: 1px solid var(--border); }
+.kb-total b { font-size: 24px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kb-due { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: 11px 14px; border-radius: var(--r-md);
+  background: var(--error-soft); color: var(--error); font-weight: 800; }
+.kb-due b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.kb-due.paid { background: var(--success-soft); color: var(--success); }
+.kb-prev { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--warning-soft); color: var(--warning); font-weight: 700; font-size: 13.5px; }
+.kb-prev small { display: block; font-weight: 500; font-size: 11.5px; opacity: .9; }
+.kb-adv-q { display: flex; gap: 6px; }
+.kb-sum-note { font-size: 12px; color: var(--ink-3); margin: 0 0 6px; }
+/* Tablet/desktop: kul rakam aur Generate hamesha nazar mein (phone par .kb-bar) */
+.kb-gen { display: none; }
+.kb-gen b { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kb-gen small { display: block; font-size: 11.5px; color: var(--ink-3); }
+.kb-gen .kb-btn { flex: 1 1 auto; }
+/* offers: dashed chips, reward box */
+.kb .rwchip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--kb-gold-soft); font-size: 13.5px; }
+.kb .rwchip.on { background: var(--success-soft); }
+.kb .rwchip .btn, .kb .rwchip .kb-btn { margin-left: auto; }
+
+/* ---------- phone: neeche ki patti ---------- */
+.kb-bar { position: sticky; bottom: var(--kb-bar-bottom, 12px); z-index: 20; display: flex; align-items: center; gap: 10px; margin-top: 12px;
+  padding: 8px; border-radius: 16px; background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(19, 24, 32, .06), 0 16px 34px -10px rgba(15, 23, 42, .35); }
+.kb-bar-sum { flex: 1 1 auto; min-width: 0; padding-left: 4px; }
+.kb-bar-sum b { display: block; font-size: 17px; font-weight: 900; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-bar-sum span { display: block; font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-bar .kb-btn { min-height: 44px; padding: 0 16px; border-radius: 12px; flex: none; font-size: 14px; }
+.kb-bar .kb-back { flex: none; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--ink);
+  font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.kb-next-in { display: none; }
+
+/* ---------- step 4 ---------- */
+.kb-done { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; max-width: 760px; margin: 0 auto; }
+.kb-done-head { display: flex; gap: 12px; align-items: flex-start; padding: 16px; margin: -4px -4px 0; border-radius: var(--r-lg); background: var(--kb-grad); color: #fff; position: relative; overflow: hidden; }
+.kb-done-head::before { content: ""; position: absolute; left: -40px; top: -60px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255, 255, 255, .14); }
+.kb-done-ok { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--success); font-weight: 900; font-size: 22px; position: relative; }
+.kb-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 255, 255, .9); position: relative; }
+.kb-done-head h3 { margin: 2px 0 4px; font-size: 22px; letter-spacing: .02em; position: relative; }
+.kb-done-head p { margin: 0; font-size: 13.5px; color: rgba(255, 255, 255, .95); line-height: 1.5; position: relative; }
+.kb-done-head p .kb-red { color: #fff; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .6); }
+.kb-tabs { display: flex; gap: 4px; margin: 14px 0 12px; padding: 4px; border-radius: 14px; background: var(--bg); border: 1px solid var(--border); }
+.kb-tabs button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 11px; background: none; color: var(--ink-2); font: inherit; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+.kb-tabs button.on { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow-sm); }
+.kb-lab-list { display: grid; gap: 6px; }
+.kb-lab-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-md); border: 1px solid var(--border); cursor: pointer; }
+.kb-lab-row input { width: 20px; height: 20px; accent-color: var(--brand-strong); flex: none; }
+.kb-lab-row span { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.kb-lab-row span .kb-gi { width: 26px; height: 26px; padding: 4px; }
+.kb-lab-row small { color: var(--ink-3); }
+.kb-lab-row em { font-style: normal; font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+.kb-lab-prev { display: flex; justify-content: center; padding: 14px; border-radius: var(--r-md); background: var(--bg); border: 1px dashed var(--border); overflow: hidden; }
+.kb-lab-prev .kkl { box-shadow: var(--shadow-md); background: #fff; }
+.kb-done-act { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.kb-done-act .kb-btn { flex: 1 1 140px; }
+.kb-done-act .kb-btn.go { flex-basis: 100%; min-height: 50px; }
+.kb-confirm { margin-top: 12px; padding: 12px; border-radius: var(--r-md); background: var(--info-soft); color: var(--ink); font-size: 14px; display: grid; gap: 8px; }
+.kb-done-foot { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+.kb-done-foot .kb-btn.go { background: var(--surface); color: var(--ink); border-color: var(--border); box-shadow: none; }
+.kb-skel { height: 48px; margin-bottom: 8px; border-radius: var(--r-md); background: linear-gradient(90deg, var(--border-soft), var(--bg), var(--border-soft)); background-size: 200% 100%; animation: kbShimmer 1.2s infinite linear; }
+.kb-skel.tall { height: 220px; }
+@keyframes kbShimmer { to { background-position: -200% 0; } }
+.kb-rc { max-width: 420px; margin: 0 auto; padding: 16px; border-radius: var(--r-md); border: 1px dashed var(--border); background: #fff; color: #111; font-size: 13px; }
+.kb-rc-shop { text-align: center; display: grid; gap: 1px; margin-bottom: 10px; }
+.kb-rc-shop b { font-size: 17px; }
+.kb-rc-shop small { color: #555; font-size: 11.5px; }
+.kb-rc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; padding: 8px 0; border-top: 1px dashed #bbb; border-bottom: 1px dashed #bbb; font-size: 12px; }
+.kb-rc-meta span:last-child { grid-column: 1 / -1; }
+.kb-rc-t { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12.5px; }
+.kb-rc-t th { text-align: right; font-size: 11px; color: #555; font-weight: 700; padding: 4px 2px; border-bottom: 1px solid #ddd; }
+.kb-rc-t td { text-align: right; padding: 4px 2px; vertical-align: top; font-variant-numeric: tabular-nums; }
+.kb-rc-t th:first-child, .kb-rc-t td:first-child { text-align: left; }
+.kb-rc-t td small { display: block; color: #666; font-size: 11px; }
+.kb-rc-sum { display: flex; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }
+.kb-rc-sum.big { font-weight: 800; font-size: 14.5px; border-top: 1px solid #ddd; margin-top: 4px; padding-top: 5px; }
+.kb-rc-sum.due { font-weight: 700; color: #b91c1c; }
+.kb-rc-sum.saved { font-weight: 700; color: #15803d; }
+.kb-rc-t s { color: #888; font-weight: 400; }
+.kb-rc-when { margin: 8px 0 0; font-size: 12px; }
+.kb-rc-bar { display: flex; justify-content: center; margin-top: 10px; }
+.kb-rc-bar svg { width: 70%; height: 36px; }
+.kb-rc-foot { text-align: center; margin: 6px 0 0; font-size: 12px; color: #444; }
+.kb-tl { list-style: none; margin: 4px 0 0; padding: 0; }
+.kb-tl li { position: relative; display: flex; gap: 12px; padding: 0 0 16px; }
+.kb-tl li:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 28px; bottom: 2px; width: 2px; background: var(--border); }
+.kb-tl i { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 13px;
+  background: var(--bg); border: 2px solid var(--border); color: transparent; }
+.kb-tl li.ok i { background: var(--success); border-color: var(--success); color: #fff; }
+.kb-tl b { display: block; font-size: 14px; }
+.kb-tl small { display: block; font-size: 12px; color: var(--ink-3); }
+
+/* print: "Download" = sirf receipt card PDF mein */
+#kb-print { display: none; }
+@media print {
+  body.kb-printing-rc > *:not(#kb-print) { display: none !important; }
+  body.kb-printing-rc > #kb-print { display: block !important; }
+  body.kb-printing-rc { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  #kb-print .kb-rc { max-width: none; margin: 0; border: 0; border-radius: 0; box-sizing: border-box; }
+  #kb-print .kb-rc * { box-sizing: border-box; }
+}
+
+/* ================= tablet: step + bill saath ================= */
+@container kb (min-width: 720px) {
+  .kb-step span { display: block; }
+  .kb-step:not(:last-child)::after { min-width: 14px; }
+  .kb-grid { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); }
+  .kb[data-step] .kb-p3 { display: block; grid-column: 2; grid-row: 1; }
+  .kb[data-step="3"] .kb-p2 { display: block; }
+  .kb-p1, .kb-p2 { grid-column: 1; grid-row: 1; }
+  .kb-bar { display: none; }
+  .kb-next-in { display: flex; margin-top: 14px; }
+  .kb-gen { display: flex; align-items: center; gap: 12px; position: sticky; bottom: var(--kb-bar-bottom, 12px); z-index: 20; margin-top: 12px; padding: 10px;
+    border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 12px 28px -10px rgba(15, 23, 42, .35); }
+  .kb-tiles { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .kb-items-h { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 64px 34px; gap: 8px; padding: 6px 0; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); border-bottom: 1px solid var(--border); }
+  .kb-it { grid-template-columns: 34px minmax(0, 1fr) auto 64px 34px; }
+  .kb-it-x { grid-column: auto; }
+  .kb-it-more { grid-column: 2 / -1; }
+}
+/* ================= desktop: teeno column ================= */
+@container kb (min-width: 1100px) {
+  .kb-grid { grid-template-columns: minmax(270px, .95fr) minmax(0, 1.65fr) minmax(300px, 1fr); }
+  .kb[data-step] .kb-pane { display: block; }
+  .kb[data-step] .kb-p1 { grid-column: 1; }
+  .kb[data-step] .kb-p2 { grid-column: 2; }
+  .kb[data-step] .kb-p3 { grid-column: 3; }
+  .kb-next-in { display: none; }
+  .kb-tiles { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
+}
+/* ================= phone (< 720): compact, list wali shakal =================
+   Bade tiles aur 46px ke khaane phone par phaile hue lagte the. Yahan sab
+   kasa hua: kapde patli rows mein (icon · naam/service · daam · ADD / − n +),
+   chhoti heading, 40px ke khaane, patli patti. Blinkit ki checkout list jaisa. */
+@container kb (max-width: 719px) {
+  .kb-steps { padding: 9px 12px; margin-bottom: 10px; border-radius: 14px; }
+  .kb-step i { width: 24px; height: 24px; font-size: 12px; }
+  .kb-card { padding: 12px; border-radius: 14px; }
+  .kb-card + .kb-card { margin-top: 8px; }
+  .kb-grid { gap: 8px; }
+  .kb-h { font-size: 14px; margin-bottom: 8px; }
+  .kb-h small { flex-basis: 100%; font-size: 11.5px; }
+  .kb-sub { margin: 10px 0 4px; font-size: 12.5px; }
+  .kb-hint { font-size: 11.5px; }
+  .kb label.kb-label, .kb .kb-label { margin: 8px 0 4px; font-size: 12px; }
+  .kb input[type="text"], .kb input[type="tel"], .kb input[type="search"], .kb input[type="number"], .kb input[type="date"], .kb select, .kb textarea
+    { min-height: 40px; padding: 7px 10px; font-size: 14px; }
+  .kb textarea { min-height: 56px; }
+  .kb-search input { min-height: 42px !important; }
+  .kb-tools .kb-btn { min-height: 42px; padding: 0 10px; font-size: 13px; }
+  .kb-btn { min-height: 42px; font-size: 14px; }
+  .kb-btn.sm { min-height: 32px; font-size: 12.5px; }
+  .kb-chips { gap: 6px; margin-top: 8px; }
+  .kb-chips button { min-height: 32px; padding: 0 11px; font-size: 12.5px; }
+  .kb .usual-chip { min-height: 32px; padding: 0 10px; font-size: 12px; }
+  .kb .usual-head { margin: 8px 0 4px; font-size: 12px; }
+  .kb-cust { padding: 10px; gap: 10px; margin-top: 8px; }
+  .kb-av { width: 38px; height: 38px; font-size: 14px; border-radius: 11px; }
+  .kb-cust-tx b { font-size: 14px; }
+  .kb-cust-tx span, .kb-cust-tx small { font-size: 12px; }
+  .kb-cust-btns { gap: 6px; margin-top: 8px; }
+  .kb-note { padding: 8px 10px; font-size: 12.5px; }
+  /* kahan hain kapde: ek line ke card */
+  .kb-mode { gap: 8px; }
+  .kb-mode button { min-height: 0; padding: 9px 10px; flex-direction: row; align-items: center; gap: 10px; border-radius: 12px; }
+  .kb-mode button .em { width: 30px; height: 30px; font-size: 16px; border-radius: 9px; }
+  .kb-mode button b { font-size: 13px; margin: 0; }
+  .kb-mode button small { font-size: 11px; }
+  .kb-mode button > span:last-of-type { display: none; }  /* phone par sublabel nahi — jagah */
+  .kb-switchrow b { font-size: 13.5px; }
+  .kb-switchrow small { font-size: 11.5px; }
+  .kb-sw { width: 42px; height: 24px; }
+  .kb-sw::after { width: 18px; height: 18px; }
+  .kb-sw.on::after { left: 21px; }
+  /* kapde: patli rows */
+  .kb-tiles { display: flex; flex-direction: column; gap: 0; margin-top: 8px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .kb-tile { flex-direction: row; align-items: center; gap: 8px; min-height: 0; padding: 7px 10px 7px 8px; border: 0; border-top: 1px solid var(--border-soft); border-radius: 0; }
+  .kb-tile:first-child { border-top: 0; }
+  .kb-tile.in { box-shadow: inset 3px 0 0 var(--c); background: color-mix(in srgb, var(--c) 7%, var(--surface)); }
+  .kb-tile .kb-n { display: none; }
+  .kb-tile-main, .kb-tile:not(:has(.kb-tile-main)) { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 9px; row-gap: 0; align-items: center; flex: 1 1 auto; text-align: left; }
+  .kb-tile:not(:has(.kb-tile-main)) { grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .kb-tile .kb-gi { grid-row: 1 / 3; width: 34px; height: 34px; padding: 7px; border-radius: 10px; }
+  .kb-tile b { grid-column: 2; grid-row: 1; font-size: 13.5px; }
+  .kb-tile small { grid-column: 2; grid-row: 2; font-size: 11px; }
+  .kb-tile em { grid-column: 2; grid-row: 2; justify-self: end; font-size: 13px; gap: 4px; }
+  .kb-tile:not(:has(.kb-tile-main)) em { grid-column: 3; grid-row: 1 / 3; }
+  .kb-tile em .kb-sv { font-size: 10px; }
+  .kb-add, .kb-tq { margin: 0; flex: none; height: 32px; width: 92px; font-size: 12px; border-radius: 10px; }
+  .kb-tq button { font-size: 18px; }
+  .kb-tq output { min-width: 26px; }
+  .kb-tile.add { min-height: 0; justify-content: flex-start; flex-direction: row; gap: 9px; padding: 9px 10px; text-align: left; align-items: center; display: flex; }
+  .kb-tile.add .kb-gi { grid-row: auto; }
+  .kb-empty { padding: 14px; font-size: 12.5px; }
+  /* jode hue kapde, saar */
+  .kb-it { padding: 7px 0; gap: 6px; }
+  .kb-qty button { width: 28px; height: 30px; font-size: 15px; }
+  .kb .kb-qty input { width: 38px; min-height: 30px; font-size: 13px; }
+  .kb-sum-row { padding: 5px 0; font-size: 13px; }
+  .kb-sum-row .kb-money { width: 92px; }
+  .kb .kb-money input { min-height: 34px; }
+  .kb .kb-sum-row select { min-height: 34px; font-size: 13px; padding: 4px 24px 4px 8px; }
+  .kb-seg button { min-height: 34px; font-size: 12.5px; }
+  .kb-total { padding: 9px 12px; margin: 8px 0 4px; }
+  .kb-total b { font-size: 20px; }
+  .kb-due { padding: 9px 12px; }
+  .kb-due b { font-size: 17px; }
+  .kb-prev { padding: 8px 10px; font-size: 12.5px; }
+  .kb-slots button { min-height: 30px; padding: 0 10px; font-size: 12px; }
+  .kb-recap .ln { padding: 6px 0; font-size: 13px; }
+  /* neeche ki patti */
+  .kb-bar { padding: 8px; border-radius: 16px; gap: 8px; }
+  .kb-bar-sum b { font-size: 17px; }
+  .kb-bar-sum span { font-size: 11.5px; }
+  .kb-bar .kb-btn, .kb-bar .kb-back { min-height: 44px; border-radius: 13px; }
+  .kb-bar .kb-back { padding: 0 11px; font-size: 13px; }
+  .kb-done { padding: 12px; }
+  .kb-done-head { padding: 12px; }
+  .kb-done-head h3 { font-size: 19px; }
+  .kb-tabs button { min-height: 36px; font-size: 13px; }
+}
+@container kb (max-width: 299px) {
+  .kb-mode { grid-template-columns: 1fr; }
+}
+
+/* ================= thermal receipt (kk-bill.js thermal) =================
+   Bluetooth printer wala hi design — screen preview aur browser print.
+   Courier = 0.6em/akshar: 58mm = 32 akshar, 80mm = 48; Font B (chhota)
+   usi chaudai mein 42 / 64. Server lines pehle se kaat kar bhejta hai. */
+.kt { font-family: "Courier New", ui-monospace, monospace; color: #000; background: #fff; line-height: 1.25; text-align: left; }
+.kt-58 { width: 32ch; }
+.kt-80 { width: 48ch; }
+.kt-l { white-space: pre; overflow: hidden; }
+.kt-c { text-align: center; }
+.kt-r { text-align: right; }
+.kt-b { font-weight: 700; }
+.kt-sm { font-size: .762em; }                 /* 32/42 */
+.kt-80 .kt-sm { font-size: .75em; }           /* 48/64 */
+.kt-x2 { font-size: 2em; line-height: 1.15; }
+.kt-h2 { padding: .42em 0; }
+.kt-h2 span { display: inline-block; transform: scaleY(2); }
+.kt-inv span { background: #000; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.kt-img { text-align: center; margin: 4px 0; }
+.kt-logo { max-width: 62%; max-height: 90px; object-fit: contain; filter: grayscale(1) contrast(1.35); }
+.kt-qr { width: 50%; image-rendering: pixelated; }
+.kt-80 .kt-qr { width: 40%; }
+/* Preview: align-items start, warna lamba bill aate hi safed kagaz dabbe
+   jitna hi lamba rehta aur baaki akshar grey par. Chaudai max-content —
+   Android Chrome chhote text ko bada kar deta hai (font boosting) par 32ch
+   wahi rehta, to "Rs.630" kat kar "Rs." dikhta. Lines server se 32 akshar
+   ki kati aati hain, isliye dabba unhi jitna. margin auto (justify center
+   nahi) — chauda ho to baayan hissa scroll se bahar na chhoote. */
+.kt-prev { display: flex; align-items: flex-start; max-height: 56vh; overflow: auto; margin: 10px 0 4px;
+  padding: 14px 10px; background: #e9ecf1; border-radius: 12px; }
+.kt-prev .kt { flex: none; width: max-content; margin: 0 auto; padding: 16px 12px 22px; font-size: 12px;
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%; box-shadow: 0 2px 12px rgba(15, 23, 42, .16); }
+@media print {
+  #receipt .kt { font-size: inherit; }
+  #receipt .kt-logo { max-height: 18mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ================= v2 polish: rang, background, 3D icons =================
+   Layout wahi purana (1 Customer → 2 Clothes → 3 Review → 4 Receipt). Sirf roop.
+   Rang ka niyam (ek hi, poore flow mein):
+     brand gradient  = sirf action/pehchan: step strip, Next/Save, total, avatar, hero
+     service parivaar = sirf kapde: chips, tile ka icon badge, count, chuna hua tile
+                        (wash teal · fold blue · iron amber · dry violet · home pink)
+     hara / peela / laal = sirf paisa: + −, chukta, udhaar, baaki
+   Safed text wale har rang par contrast 4.5:1 se upar (AA). */
+:root, .kb {
+  --kb-grad: linear-gradient(135deg, #2c3f86 0%, var(--navy) 50%, var(--navy-deep) 100%);   /* strip, avatar, hero */
+  --kb-grad-strong: linear-gradient(135deg, #1a4bd6 0%, #1f5af0 100%);                /* buttons, total — safed text saaf */
+  --kb-wash: #0f766e; --kb-fold: #1d4ed8; --kb-iron: #b45309; --kb-dry: #6d28d9; --kb-home: #be185d; --kb-gold: #a16207;
+  --c: var(--brand-strong);
+}
+[data-fam="wash"] { --c: var(--kb-wash); } [data-fam="fold"] { --c: var(--kb-fold); } [data-fam="iron"] { --c: var(--kb-iron); }
+[data-fam="dry"] { --c: var(--kb-dry); } [data-fam="home"] { --c: var(--kb-home); }
+
+/* background: upar halki neeli dhundh — card safed usse alag dikhe */
+.kb { background: radial-gradient(900px 240px at 50% -90px, color-mix(in srgb, var(--brand) 11%, transparent), transparent 70%); }
+
+/* step strip */
+.kb-steps { background: var(--kb-grad); border: 0; color: #fff; box-shadow: 0 10px 24px -14px rgba(31, 90, 240, .9); position: relative; overflow: hidden; }
+.kb-steps::after { content: ""; position: absolute; right: -50px; top: -70px; width: 170px; height: 170px; border-radius: 50%; background: rgba(255, 255, 255, .13); pointer-events: none; }
+.kb-step { position: relative; z-index: 1; }
+.kb-step:not(:last-child)::after { background: rgba(255, 255, 255, .32); }
+.kb-step.ok:not(:last-child)::after { background: rgba(255, 255, 255, .9); }
+.kb-step i { background: rgba(255, 255, 255, .2); border-color: rgba(255, 255, 255, .55); color: #fff; }
+.kb-step.on i { background: #fff; border-color: #fff; color: var(--brand-strong); box-shadow: 0 0 0 4px rgba(255, 255, 255, .25), 0 4px 10px rgba(0, 0, 0, .15); }
+.kb-step.ok i { background: rgba(255, 255, 255, .92); border-color: #fff; color: var(--brand-strong); }
+.kb-step b { color: #fff; }
+.kb-step small { color: rgba(255, 255, 255, .88); }
+
+/* cards: safed, halki parchhai, gol kone — ek hi radius har jagah (16) */
+.kb-card { border-radius: 16px; box-shadow: 0 1px 2px rgba(19, 24, 32, .05), 0 8px 24px -18px rgba(19, 24, 32, .25); }
+.kb-h { font-weight: 800; }
+
+/* buttons: gehra gradient (safed text 4.5:1+), dabao to dabta hai */
+.kb-btn.go { background: var(--kb-grad-strong); color: #fff; border-radius: 14px; box-shadow: 0 8px 18px -8px rgba(190, 24, 93, .75), inset 0 1px 0 rgba(255, 255, 255, .22); }
+.kb-btn.go:hover { filter: brightness(1.06); }
+.kb-btn.go:active { transform: translateY(1px); box-shadow: 0 4px 10px -6px rgba(190, 24, 93, .75); }
+.kb-btn.ghost { border-radius: 14px; color: var(--ink); }
+.kb-btn.ghost:hover { border-color: var(--brand); color: var(--brand-ink); }
+.kb-seg { background: var(--bg); }
+.kb-seg button.on { background: var(--surface); color: var(--brand-ink); border: 1.5px solid var(--brand); box-shadow: var(--shadow-sm); }
+.kb-switch.on { background: var(--kb-grad-strong); border-color: transparent; color: #fff; }
+.kb-link { color: var(--brand-ink); }
+
+/* grahak: halka sona (VIP ka ehsaas), avatar brand gradient */
+.kb-cust { background: linear-gradient(180deg, color-mix(in srgb, var(--kb-gold) 12%, var(--surface)), var(--surface) 80%); border-color: color-mix(in srgb, var(--kb-gold) 30%, var(--border)); }
+.kb-cust.owes { background: linear-gradient(180deg, var(--warning-soft), var(--surface) 80%); border-color: color-mix(in srgb, var(--warning) 30%, var(--border)); }
+.kb-av { border-radius: 14px; background: var(--kb-grad); box-shadow: 0 6px 14px -6px rgba(31, 90, 240, .8), inset 0 1px 0 rgba(255, 255, 255, .3); }
+.kb-tag.vip { background: color-mix(in srgb, var(--kb-gold) 16%, var(--surface)); color: #854d0e; border-color: color-mix(in srgb, var(--kb-gold) 45%, transparent); }
+.kb-tag.regular { background: color-mix(in srgb, var(--kb-wash) 14%, var(--surface)); color: var(--kb-wash); border-color: transparent; }
+.kb-tag.new { background: color-mix(in srgb, var(--kb-home) 12%, var(--surface)); color: var(--kb-home); border-color: transparent; }
+
+/* chips: service ka rang ka dot; chuna hua = us rang ka, safed text */
+.kb-chips.svc button { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; color: var(--ink-2); }
+.kb-chips.svc button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; box-shadow: inset 0 -2px 3px rgba(0, 0, 0, .2); }
+.kb-chips.svc button.on { background: var(--c); border-color: var(--c); color: #fff; box-shadow: 0 6px 14px -8px var(--c); }
+.kb-chips.svc button.on::before { background: #fff; }
+.kb-chips button.on { box-shadow: 0 6px 14px -8px rgba(31, 90, 240, .8); }
+
+/* tiles: icon 3D gol badge mein (rang service ka), card par gehraai */
+.kb-tile { border-radius: 14px; box-shadow: 0 1px 2px rgba(19, 24, 32, .05), 0 6px 16px -14px rgba(19, 24, 32, .35); transition: transform .08s, box-shadow .12s; }
+.kb-tile:hover { border-color: color-mix(in srgb, var(--c) 55%, var(--border)); }
+.kb-tile:active { transform: scale(.98); }
+.kb-tile.in { border-color: var(--c); background: color-mix(in srgb, var(--c) 7%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent); }
+.kb-tile .kb-gi, .kb-it .kb-gi, .kb-lab-row .kb-gi {
+  width: 44px; height: 44px; padding: 9px; border-radius: 50%; color: var(--c);
+  background: radial-gradient(circle at 30% 25%, #fff 0%, color-mix(in srgb, var(--c) 18%, #fff) 48%, color-mix(in srgb, var(--c) 36%, #fff) 100%);
+  box-shadow: 0 6px 12px -6px color-mix(in srgb, var(--c) 55%, transparent), inset 0 -3px 6px color-mix(in srgb, var(--c) 16%, transparent), inset 0 2px 3px rgba(255, 255, 255, .9);
+}
+.kb-it .kb-gi { width: 32px; height: 32px; padding: 6px; }
+.kb-lab-row .kb-gi { width: 26px; height: 26px; padding: 4px; }
+.kb-tile .kb-n { background: var(--c); box-shadow: 0 4px 10px -4px var(--c), inset 0 1px 0 rgba(255, 255, 255, .35); }
+.kb-tile em { font-weight: 800; }
+.kb-tile.add { border-style: dashed; background: var(--brand-soft); color: var(--brand-ink); --c: var(--brand-strong); }
+
+/* jode hue kapde: + − hare (paisa/ginti ka rang), hataane ka ✕ laal */
+.kb-qty { border-color: var(--success); }
+.kb-qty button { background: var(--success-soft); color: var(--success); }
+.kb-it-n button { color: var(--brand-ink); }
+
+/* bill summary: total gehra gradient (safed text saaf), due laal/hara */
+.kb-total { background: var(--kb-grad-strong); color: #fff; border-radius: 14px; box-shadow: 0 10px 22px -12px rgba(190, 24, 93, .9); }
+.kb-total b { color: #fff; }
+.kb-due { border-radius: 14px; }
+
+/* neeche ki patti: gehra, Next gradient, Back halka */
+.kb-bar { background: var(--plate-grad); color: #fff; border-radius: 20px; box-shadow: 0 18px 36px -12px rgba(15, 23, 42, .6), inset 0 1px 0 rgba(255, 255, 255, .06); }
+/* gehri patti par text safed — warna kul raqam kale par kala, dikhti hi nahi thi */
+.kb-bar-sum b { color: #fff; }
+.kb-bar-sum span { color: rgba(255, 255, 255, .74); }
+.kb-bar .kb-btn.go { background: var(--kb-grad-strong); }
+.kb-bar .kb-back { background: rgba(255, 255, 255, .14); color: #fff; border-color: rgba(255, 255, 255, .28); border-radius: 14px; }
+/* Total pehle: poora dikhe ("₹1…" nahi); jagah kam ho to Next ka label chhota hota hai */
+.kb-bar-sum { flex: 1 1 auto; min-width: 0; }
+.kb-bar-sum b { overflow: visible; text-overflow: clip; }
+.kb-bar .kb-btn.go { flex: 0 0 auto; padding-inline: 18px; font-size: 14px; white-space: nowrap; }
+.kb-bar .kb-back { flex: none; padding-inline: 10px; }
+/* 320px wale phone: label poora dikhe, tareekh aur samay alag lines par */
+@container kb (max-width: 340px) {
+  .kb-bar { gap: 6px; }
+  .kb-bar .kb-btn.go { padding-inline: 12px; font-size: 13px; }
+  .kb-bar .kb-back { padding-inline: 8px; font-size: 12px; }
+  .kb-2:has(input[type="date"]) { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* kadam 4: hero gradient, ✓ safed gol mein */
+.kb-done { border-radius: 16px; }
+.kb-done-head { padding: 16px; margin: -4px -4px 0; border-radius: 14px; background: var(--kb-grad); color: #fff; position: relative; overflow: hidden; }
+.kb-done-head::before { content: ""; position: absolute; left: -40px; top: -60px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255, 255, 255, .14); }
+.kb-done-ok { background: #fff; color: var(--success); box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .35); position: relative; }
+.kb-eyebrow { color: rgba(255, 255, 255, .92); position: relative; }
+.kb-done-head h3, .kb-done-head p { position: relative; color: #fff; }
+.kb-done-head p .kb-red { color: #fff; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .6); }
+.kb-tabs { border-radius: 14px; }
+.kb-tabs button.on { color: var(--brand-ink); }
+.kb-tl li.ok i { box-shadow: 0 4px 10px -4px var(--success); }
+
+/* ---- phone: jode hue kapde ek line mein ----
+   Pehle har kapda 3 line leta tha: ✕ neeche gir jaata tha (grid ki 4th column
+   agli row mein), aur "Dry Clean · ₹100 each ✎" toot jaata tha. Ab:
+   [icon] [naam / service·daam] [− 1 +] [✕]  aur rakam stepper ke neeche. */
+@container kb (max-width: 719px) {
+  .kb-it { grid-template-columns: 32px minmax(0, 1fr) auto 28px; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 8px 0; }
+  .kb-it .kb-gi { grid-column: 1; grid-row: 1 / 3; width: 32px; height: 32px; padding: 6px; }
+  .kb-it-n { grid-column: 2; grid-row: 1 / 3; min-width: 0; }
+  .kb-it-n b { font-size: 13.5px; }
+  .kb-it-n button { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; }
+  .kb-qty { grid-column: 3; grid-row: 1; justify-self: end; height: 30px; }
+  .kb-qty button { width: 28px; height: 28px; font-size: 15px; }
+  .kb .kb-qty input { width: 36px; min-height: 28px; font-size: 13px; }
+  .kb-it-amt { grid-column: 3; grid-row: 2; justify-self: end; min-width: 0; font-size: 13px; line-height: 1.1; }
+  .kb-it-x { grid-column: 4; grid-row: 1 / 3; width: 28px; height: 28px; font-size: 13px; justify-self: end; }
+  .kb-it-more { grid-column: 2 / -1; grid-row: 3; font-size: 11.5px; gap: 6px; }
+  .kb-it-more .kb-money { width: 110px; }
+  .kb-it-more button { font-size: 12px; }
+  .kb-items .kb-sub { margin: 10px 0 2px; }
+}
+
+/* Kapdon ki list aur jude hue kapde saans lein, ek-doosre se chipke nahi */
+@container kb (max-width: 719px) {
+  .kb-tiles { gap: 8px; border: 0; background: none; overflow: visible; }
+  .kb-tile { padding: 10px 10px 10px 12px; border: 1px solid var(--border); border-radius: 14px; }
+  .kb-tile:first-child { border-top: 1px solid var(--border); }
+  .kb-tile-main, .kb-tile:not(:has(.kb-tile-main)) { grid-template-columns: 44px minmax(0, 1fr); column-gap: 12px; }
+  .kb-tile:not(:has(.kb-tile-main)) { grid-template-columns: 44px minmax(0, 1fr) auto; }
+}
+
+/* Search ki list poori chaudai mein ("Blaz/er" nahi): khaane ke neeche, ＋ Custom tak */
+.kb-tools { position: relative; }
+.kb-tools .kb-ac { position: static; flex: 1 1 auto; min-width: 0; }
+.kb-draft-link { display: none; font-size: 12.5px; }
+.kb-sub:has(.kb-draft-link) { align-items: center; }
+/* Chhote phone par patti mein Total + Next hi; Draft cart ke upar */
+@media (max-width: 420px) {
+  .kb-bar-draft, #nb-draft { display: none !important; }
+  .kb-draft-link { display: inline; }
+}
+/* ---- phone: lambe naam aur daam katne nahi chahiye ---- */
+@container kb (max-width: 719px) {
+  .kb-tile-main, .kb-tile:not(:has(.kb-tile-main)) { grid-template-rows: auto auto auto; }
+  .kb-tile .kb-gi { grid-row: 1 / 4; }
+  .kb-tile b { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+  .kb-tile em { grid-column: 2; grid-row: 3; justify-self: start; }
+  .kb-tile:not(:has(.kb-tile-main)) em { grid-column: 3; grid-row: 1 / 4; }
+  .kb-add, .kb-tq { height: 40px; width: 96px; }
+  .kb-tq button { min-width: 34px; }
+  /* jodi hui line: upar naam + ✕, neeche − n + aur rakam */
+  .kb-it { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 10px; row-gap: 6px; padding-block: 10px; }
+  .kb-it .kb-gi { grid-row: 1; }
+  .kb-it-n { grid-column: 2; grid-row: 1; }
+  .kb-it-n b { white-space: normal; overflow-wrap: anywhere; }
+  .kb-it-n button { white-space: normal; text-align: left; font-size: 12px; min-height: 24px; }
+  .kb-it-x { grid-column: 3; grid-row: 1; width: 36px; height: 36px; font-size: 14px; }
+  .kb-qty { grid-column: 2; grid-row: 2; justify-self: start; height: 40px; }
+  .kb-qty button { width: 40px; height: 38px; font-size: 18px; }
+  .kb .kb-qty input { width: 48px; min-height: 38px; }
+  .kb-it-amt { grid-column: 3; grid-row: 2; justify-self: end; font-size: 14.5px; }
+  .kb-it-more { grid-column: 2 / -1; grid-row: 3; }
+  /* Kg wale kapde par daam khula ho to do patti: daam, phir "Edit clothes" —
+     dono row 3 par ek ke upar ek chhap jaati thi (₹150 "Edit clothes" ke upar) */
+  .kb-it-more + .kb-it-more { grid-row: 4; }
+  .kb-sum-row .kb-ctl { margin-left: auto; }
+  /* pehla kapda judte hi "1 item" nayi line par girta tha aur list 16px khisakti thi */
+  #b-count, #nbw-count { flex-basis: auto; }
+}
+@container kb (max-width: 340px) {
+  .kb-it-n button { font-size: 11px; }
+  .kb-add, .kb-tq { width: 84px; }
+  .kb-tq button { min-width: 28px; }
+  .kb-tq output { min-width: 22px; font-size: 13px; }
+}

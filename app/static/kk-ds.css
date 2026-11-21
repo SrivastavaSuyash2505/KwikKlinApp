@@ -1,0 +1,197 @@
+/* Kwik Klin Design System — shared component layer.
+ *
+ * tokens.css rang aur naap rakhta hai; ye file batati hai ki button, input,
+ * card, table, modal, toast, nav etc. HAR surface par ek jaise dikhen
+ * (/admin, /staff, /solo, /control, billing). Sabse aakhir mein load hoti
+ * hai, aur layout/behaviour nahi badalti — sirf look. Component reference:
+ * docs/DESIGN-SYSTEM.md.
+ *
+ * Staff aur Solo ke liye webfont abhi bhi nahi aata (--font-system): wo 3G
+ * par chalne wali apps hain. Baaki sab yahan se ek hi hai.
+ */
+
+/* ── base ──────────────────────────────────────────────────────────────── */
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+::selection { background: rgba(47, 107, 255, .2); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+button, [role="button"], a { -webkit-tap-highlight-color: transparent; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* chip/tile ka dabana page ko hilaye nahi: browser khud anchor sambhale */
+body { overflow-anchor: auto; }
+
+/* ── buttons ───────────────────────────────────────────────────────────── */
+.btn, .btn-primary {
+  border-radius: var(--r-md); font-weight: 600; letter-spacing: -.005em;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease), transform var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.btn:not(.ghost):not(.danger):not(.ok):not(.money):not(.linkbtn):not(.kb-btn),
+.btn.orange, .btn.go, .btn-primary {
+  background: var(--brand-strong); border-color: var(--brand-strong); color: var(--on-brand);
+  box-shadow: 0 1px 2px rgba(14, 22, 48, .14), inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+.btn.ghost {
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.btn.danger { background: var(--error); box-shadow: 0 1px 2px rgba(14, 22, 48, .14); }
+/* .btn nowrap hai: flex row mein sikudne par text bina nishaan kat jaata tha */
+.btn { flex-shrink: 0; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:focus-visible, .btn-primary:focus-visible { outline: 0; box-shadow: var(--ring); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(.ghost):not(.danger):not(.ok):not(.money):not(.linkbtn):not(.kb-btn):hover:not(:disabled),
+  .btn.go:hover:not(:disabled) { background: #1a4bd6; box-shadow: var(--shadow-brand); }
+  .btn.ghost:hover:not(:disabled) { border-color: #c6d2e8; background: #fafbfe; color: var(--ink); }
+}
+
+/* ── form controls ─────────────────────────────────────────────────────── */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select, textarea {
+  border-color: var(--border); border-radius: var(--r-md); color: var(--ink);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):focus,
+select:focus, textarea:focus { outline: 0; border-color: var(--brand); box-shadow: var(--ring); }
+input::placeholder, textarea::placeholder { color: #98a3b8; }
+input[type=checkbox], input[type=radio] { accent-color: var(--brand-strong); }
+
+/* ── cards ─────────────────────────────────────────────────────────────── */
+.card { border-color: var(--border); box-shadow: var(--shadow-sm); }
+.kpi { border-radius: var(--r-lg); }
+.kpi .val { letter-spacing: -.03em; color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .kpi:hover { box-shadow: var(--shadow-md); border-color: var(--brand-line); transform: translateY(-1px); }
+}
+
+/* ── tables ────────────────────────────────────────────────────────────── */
+.tbl th, #sec-dashboard .tbl th {
+  background: #f8faff; color: var(--ink-3); font-size: 11px; font-weight: 600; letter-spacing: .06em;
+}
+.tbl th:last-child { background: #f8faff; }
+@media (hover: hover) and (pointer: fine) {
+  .tbl tbody tr:hover td, .tbl tbody tr:hover td:last-child { background: #f6f9ff; }
+}
+
+/* ── chips aur tabs ────────────────────────────────────────────────────── */
+.chip { border-color: var(--border); transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.chip.on { background: var(--navy); color: #fff; border-color: transparent; }
+.chip:focus-visible { outline: 2px solid var(--brand); }
+.taskcard:focus-visible { outline: 2px solid var(--brand); }
+
+
+/* bill tiles: ADD bhi wahi primary neela; hara sirf "ho gaya" ke liye */
+.kb-add { border-color: var(--brand); color: var(--brand-strong); background: var(--brand-soft); }
+.kb-tq { border-color: var(--brand); }
+.kb-tq button, .kb-tq output { color: var(--brand-strong); }
+
+/* ── Control: plan editor ─────────────────────────────────────────────── */
+.plan-design { display: block; }
+.plan-design summary { padding: 8px 4px; line-height: 1.4; }
+.pd-sec { padding: var(--sp-4) 0; border-top: 1px solid var(--border-soft); }
+.plan-design > summary + .pd-sec { margin-top: var(--sp-2); }
+.pd-sec h4 { margin: 0 0 var(--sp-3); font-size: var(--fs-md); font-weight: 700; color: var(--ink); }
+.pd-sec h4:has(+ .pd-hint) { margin-bottom: 2px; }
+.pd-hint { margin: 0 0 var(--sp-3); font-size: var(--fs-xs); }
+.pd-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: var(--sp-3) var(--sp-4); }
+.pd-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pd-field label { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }
+.pd-field input { width: 100%; margin: 0; }
+.pd-sec textarea { width: 100%; margin: 0; line-height: 1.5; }
+.plan-design .feat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: var(--sp-2); }
+.plan-design .feat {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface); color: var(--ink); font-size: var(--fs-sm); font-weight: 500; line-height: 1.4; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.plan-design .feat input { flex: none; width: 16px; height: 16px; min-height: 0; margin: 2px 0 0; }
+.plan-design .feat:has(input:checked) { background: var(--brand-soft); border-color: var(--brand-line); }
+.plan-design .feat:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 1px; }
+.pd-changed { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: var(--r-pill); background: var(--warning-soft); color: var(--warning); font-size: 11px; font-weight: 600; }
+.pd-foot {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3); margin: 0 -16px -14px;
+  padding: var(--sp-4); border-top: 1px solid var(--border); border-radius: 0 0 var(--r-lg) var(--r-lg); background: #f8faff;
+}
+.pd-foot .pd-field { flex: 1 1 280px; }
+.pd-foot .btnrow { flex: 1 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-2); margin: 0; }
+.pd-foot .btnrow .btn-danger { order: -1; margin-right: auto; }
+
+/* ── skeleton / empty / alert ─────────────────────────────────────────── */
+.kk-skel {
+  background: linear-gradient(90deg, var(--border-soft) 25%, #e4eaf5 50%, var(--border-soft) 75%);
+  background-size: 200% 100%; animation: kk-shimmer 1.3s linear infinite;
+}
+@keyframes kk-shimmer { to { background-position: -200% 0; } }
+.empty, .emptystate { color: var(--ink-3); }
+.empty b { color: var(--ink); }
+.kk-alert {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md);
+  border: 1px solid var(--brand-line); background: var(--brand-soft); color: var(--brand-ink); font-size: var(--fs-sm);
+}
+.kk-alert[hidden], .kb-btn[hidden] { display: none; }
+.kk-alert > span { flex: 1 1 auto; min-width: 0; }
+.kk-alert .btn { flex: none; }
+
+/* ── modal aur sheet ───────────────────────────────────────────────────── */
+.modal { border-radius: var(--r-xl); box-shadow: var(--shadow-lg); }
+.overlay, .modal-ov { background: rgba(10, 17, 40, .52); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.modal-ov .modal { border-radius: var(--r-xl) var(--r-xl) 0 0; }
+.toast { background: var(--navy-deep); color: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-lg); }
+.toast.err, .toast.bad, .toast.error { background: var(--error); color: #fff; }
+
+/* ── admin / control: navy sidebar ────────────────────────────────────── */
+.sidebar { background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%); }
+.logo-badge { background: var(--brand-grad); box-shadow: var(--shadow-brand); }
+.logo small, .sidebar .logo small { color: var(--brand-on-navy); }
+.nav div, .nav a { transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.nav div.on, .nav a.on { background: var(--brand-strong); color: #fff; box-shadow: 0 6px 16px -8px rgba(47, 107, 255, .9); }
+.nav div.on .ic, .nav a.on .ic { color: #fff; }
+.nav .navsec { color: #7f8db8; }
+@media (hover: hover) and (pointer: fine) {
+  .nav div:hover, .nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+  .nav div.on:hover, .nav a.on:hover { background: var(--brand-strong); }
+}
+.pagehead h2 { color: var(--ink); }
+
+/* ── mobile app chrome: staff + solo + phone admin ────────────────────── */
+.top { background: linear-gradient(120deg, var(--navy-deep), var(--navy)); }
+.bottom, .tabbar {
+  background: rgba(255, 255, 255, .94); backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-top: 1px solid var(--border); box-shadow: 0 -6px 20px -14px rgba(14, 22, 48, .25);
+}
+.bottom button { color: var(--ink-3); font-weight: 600; transition: color var(--dur) var(--ease); }
+.bottom button.on, .tabbar div.on { color: var(--brand-strong); }
+.bottom button.fab i, .tabbar .tab-fab .ti { background: var(--brand-grad); color: #fff; box-shadow: var(--shadow-brand), 0 0 0 5px #fff; }
+.bottom button.fab i .ic { color: #fff; }
+.mark i { background: var(--brand-grad); }
+
+/* ── touch targets: sirf ungli wale device par, desktop density bani rahe ── */
+@media (pointer: coarse) {
+  .btn.sm { min-height: 40px; }
+  .chip { min-height: 40px; }
+  .iconbtn { min-width: 44px; min-height: 44px; }
+  .kb-qty button { min-width: 40px; min-height: 40px; }
+  .kb-del { min-width: 40px; min-height: 40px; }
+  .kb-chips button { min-height: 40px; }
+  .linkbtn { min-height: 40px; }
+  /* dikhne mein chhote rahen, par ungli ka ilaaka bada */
+  .kb-step button, .kb-sw, .nbw-tgl, .gr-x { position: relative; }
+  .kb-step button::before, .kb-sw::before, .nbw-tgl::before, .gr-x::before { content: ""; position: absolute; inset: -8px; }
+  /* iOS 16px se chhote input par page zoom kar deta hai */
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px; }
+}
+
+/* ── Solo: sirf phone. Bade screen par bhi phone-width column — dashboard nahi. */
+@media (min-width: 560px) {
+  body.kk-solo { background: var(--navy-deep); }
+  body.kk-solo .app { width: 100%; max-width: 480px; margin-inline: auto; min-height: 100dvh; box-shadow: var(--shadow-lg); }
+  body.kk-solo .bottom { width: 480px; max-width: 100vw; bottom: 0; border-radius: 0; border-width: 1px 0 0; }
+  body.kk-solo .today, body.kk-solo .chips, body.kk-solo .searchrow, body.kk-solo .list { max-width: 480px; }
+  body.kk-solo .modal-ov .modal { max-width: 480px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .chip, .kk-chip, .kk-skel, .kpi { transition: none; animation: none; }
+}

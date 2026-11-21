@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kwik Klin — Your account is being set up</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%BA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- fonts async — first paint in the system font, swaps to Inter when it arrives -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="/admin/static/tokens.css">
+<link rel="stylesheet" href="/admin/static/kk-ds.css">
+<style>
+  :root { --brand:var(--brand); --ink:#111B21; --mut:#667781; --line:#E6E9EC; --ok:#00A884; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:#F7F8FC; line-height:1.6; }
+  .wrap { max-width:620px; margin:0 auto;
+          padding:0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); }
+  header { background:#fff; border-bottom:1px solid var(--line); }
+  /* padding-block: `padding:14px 0` .wrap ka side gutter mita deta tha, aur
+     Logout ka -12px margin page ko 320px par sideways scroll karwata tha */
+  .nav { display:flex; align-items:center; gap:10px; padding-block:14px; }
+  .badge { width:38px; height:38px; border-radius:11px; background:var(--brand); color:#fff;
+           display:grid; place-items:center; font-weight: 700; font-size:14px; }
+  .nav b { font-weight: 700; }
+  .spacer { flex:1; }
+  /* 44px tap target — text button ke chaaron or padding */
+  .lo { background:none; border:none; color:var(--mut); font:inherit; font-size:13px; cursor:pointer;
+        min-height:44px; min-width:44px; padding:10px 12px; margin:-10px -12px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:30px; margin:34px 0; }
+  .tick { width:52px; height:52px; border-radius:50%; background:#E7F8F1; color:var(--ok);
+          display:grid; place-items:center; font-size:26px; margin-bottom:14px; }
+  h1 { font-size:24px; font-weight: 700; letter-spacing:-.3px; }
+  .sub { color:var(--mut); margin-top:6px; font-size:14.5px; }
+  .meta { display:flex; gap:10px; flex-wrap:wrap; margin:18px 0 4px; }
+  .chip { background:#F3F5F7; border-radius:999px; padding:6px 13px; font-size:12.5px; font-weight:600; }
+  .chip.plan { background:var(--brand-soft); color:#1f5af0; }
+  .chip.trial { background:#E7F8F1; color:#046C4E; }
+  h2 { font-size:15px; margin:26px 0 10px; }
+  ol { margin-left:18px; }
+  li { font-size:14px; padding:6px 0; }
+  li b { font-weight:600; }
+  .done { color:var(--ok); }
+  .foot { color:var(--mut); font-size:13px; margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+  .foot a { color:var(--brand); font-weight:600; text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header><div class="wrap nav">
+  <div class="badge">KK</div><b>Kwik Klin</b>
+  <div class="spacer"></div>
+  <button class="lo" onclick="logout()">Logout</button>
+</div></header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="tick">✓</div>
+    <h1 id="hi">Account created!</h1>
+    <p class="sub" id="sub">Your account is ready. We are now setting up your shop.</p>
+
+    <div class="meta" id="meta"></div>
+
+    <h2>Get value before connecting WhatsApp</h2>
+    <ol>
+      <li class="done"><b>✓ Account created</b> — you can log in</li>
+      <li><b>Shop profile</b> — confirm your shop name and details</li>
+      <li><b>Rate card</b> — add your prices (you can start with the standard template)</li>
+      <li><b>First bill</b> — create it in the dashboard, then print or share it</li>
+      <li><b>Add your staff</b> — who washes, who delivers</li>
+      <li><b>Connect WhatsApp when ready</b> — automate sending bills and updates after setup</li>
+    </ol>
+
+    <div class="foot">
+      We will WhatsApp you on <b id="ph">your number</b> for the setup.
+      Any questions — just ask us right there.
+    </div>
+  </div>
+</div>
+
+<script>
+async function api(p, body, method) {
+  const r = await fetch(p, {
+    method: method || (body ? "POST" : "GET"),
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || "error");
+  return r.json();
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function logout() {
+  try { await api("/api/logout", {}); } catch (e) {}
+  location.href = "/join";
+}
+
+(async function () {
+  try {
+    const d = await api("/api/me");
+    const t = d.tenant || {};
+    document.getElementById("hi").textContent =
+      `Welcome, ${d.user.name || ""}!`;
+    document.getElementById("sub").textContent =
+      `${t.shop_name || "Your shop"} is ready. We are doing the setup.`;
+    const chips = [`<span class="chip plan">${esc(t.plan_name || "")} plan</span>`];
+    if (t.status === "trial" && t.trial_ends_at) {
+      const days = Math.max(0, Math.ceil((new Date(t.trial_ends_at) - new Date()) / 86400000));
+      chips.push(`<span class="chip trial">${days} days of free trial left</span>`);
+    } else if (t.status === "active") {
+      chips.push(`<span class="chip trial">Subscription active</span>`);
+    } else if (t.status) {
+      chips.push(`<span class="chip">${esc(t.status)}</span>`);
+    }
+    document.getElementById("meta").innerHTML = chips.join("");
+    if (d.user.email) document.getElementById("ph").textContent = "your WhatsApp number";
+
+    // Chalu account -> dashboard ka rasta sabse upar (self-serve gate)
+    if (!["locked", "suspended", "cancelled"].includes(t.status)) {
+      const go = document.createElement("a");
+      // Solo: dashboard nahi, phone wali app hi dukaan hai
+      go.href = t.solo ? "/solo" : "/admin";
+      go.textContent = t.solo ? "📱 Apni app kholein →" : "🚀 Apna dashboard kholein →";
+      go.style.cssText = "display:inline-block;margin:14px 8px 0 0;padding:10px 18px;" +
+        "background:var(--brand-strong);color:#fff;border-radius:8px;text-decoration:none;font-weight:700";
+      document.getElementById("meta").after(go);
+    }
+
+    // WhatsApp status card (owner) — number hamari team Control panel se jodti hai
+    if (d.user.role === "OWNER") {
+      const wa = await api("/api/whatsapp/status").catch(() => null);
+      const card = document.createElement("div");
+      card.style.cssText = "margin-top:18px;padding:14px;border:1px solid #eee;border-radius:10px;text-align:left";
+      card.innerHTML = wa && wa.connected
+        ? `<b>📱 WhatsApp API: connected ✅</b>`
+        : `<b>📱 WhatsApp API: not connected yet</b><br>
+          <span style="color:#667085;font-size:13px">Our team connects your number during setup. Until then you can send bills and updates from your own phone.</span>`;
+      document.querySelector(".card, body > div") ?
+        document.body.lastElementChild.before(card) : document.body.appendChild(card);
+    }
+
+    // Trial / read-only / locked: subscribe button dikhao (recurring).
+    if (t.status !== "active" && d.user.role === "OWNER") {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.style.cssText = "margin-top:14px;padding:10px 18px;cursor:pointer";
+      btn.textContent = "💳 Subscribe — " + esc(t.plan_name || "") + " plan";
+      btn.onclick = () => startCheckout(t.plan || "starter");
+      document.getElementById("meta").after(btn);
+    }
+  } catch (e) {
+    location.href = "/join#login";   // session nahi hai
+  }
+})();
+
+/* Recurring subscription checkout. Server subscription banata hai;
+   Razorpay har cycle khud charge karta hai. Asli activation webhook se —
+   ye page sirf turant feedback deta hai. */
+async function startCheckout(plan) {
+  let out;
+  try {
+    out = await api("/api/checkout", { plan: plan, annual: false });
+  } catch (e) { alert(e.message); return; }
+  if (out.disabled) {
+    alert("Payments abhi setup nahi hain — aapka trial chalta rahega. Hum jald contact karenge.");
+    return;
+  }
+  const loaded = await new Promise((res) => {
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => res(true);
+    s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+  if (!loaded) {
+    alert("Payment page load nahi hua. Internet check karke dobara try karein.");
+    return;
+  }
+  const rzp = new Razorpay({
+    key: out.key_id,
+    subscription_id: out.subscription_id,
+    name: "KwikKlin",
+    description: (out.breakup.plan_name || "") + " plan (" + out.breakup.cycle + ")",
+    handler: async function (resp) {
+      try {
+        await api("/api/checkout/confirm", {
+          razorpay_payment_id: resp.razorpay_payment_id,
+          razorpay_subscription_id: resp.razorpay_subscription_id,
+          razorpay_signature: resp.razorpay_signature,
+        });
+        alert("Payment mil gaya! Account activate ho raha hai…");
+        location.reload();
+      } catch (e) { alert("Payment verify nahi hua: " + e.message); }
+    },
+    modal: {
+      ondismiss: function () { alert("Payment cancel ho gaya. Koi paisa nahi kata, aap dobara try kar sakte hain."); },
+    },
+  });
+  rzp.on("payment.failed", function (resp) {
+    const why = resp && resp.error && resp.error.description;
+    alert("Payment fail ho gaya" + (why ? ": " + why : "") + ". Dobara try karein.");
+  });
+  rzp.open();
+}
+</script>
+</body>
+</html>

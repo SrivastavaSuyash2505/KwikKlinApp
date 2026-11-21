@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1430">
+<title>Kwik Klin Staff</title>
+<link rel="stylesheet" href="/admin/static/tokens.css?v=s10">
+<link rel="stylesheet" href="/admin/static/staff.css?v=s20">
+<link rel="stylesheet" href="/admin/static/staff-ui2.css?v=15">
+<link rel="stylesheet" href="/admin/static/staff-scan.css?v=2">
+<link rel="stylesheet" href="/admin/static/kk-labels.css?v=1">
+<link rel="stylesheet" href="/admin/static/kk-bill.css?v=9">
+<link rel="stylesheet" href="/admin/static/plan-ring.css?v=1">
+<link rel="stylesheet" href="/admin/static/you.css?v=4">
+<link rel="stylesheet" href="/admin/static/solo-pro.css?v=10">
+<link rel="stylesheet" href="/admin/static/kk-ds.css?v=2">
+<link rel="stylesheet" href="/admin/static/kk-passkey.css?v=1">
+<link rel="manifest" href="/staff/manifest.webmanifest">
+<link rel="icon" href="/staff/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/staff/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kwik Klin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+<!-- boot: jab tak server ne nahi bataya ki ye aadmi andar hai ya nahi,
+     koi faisla nahi dikhaya jaata — warna har refresh par login jhalakti hai -->
+<section id="boot" class="boot">
+  <div class="mark"><i>KK</i><div><b>Kwik Klin</b><span>Staff</span></div></div>
+  <span class="spin" id="boot-spin"></span>
+  <div id="boot-off" class="boot-off" hidden>
+    <p>Can't reach Kwik Klin. Check your signal — it will try again by itself.</p>
+    <button type="button" id="boot-retry" class="btn go">Try again</button>
+  </div>
+</section>
+
+<section id="login" class="login" hidden>
+  <div class="sheet">
+    <div class="mark spaced"><i>KK</i><div><b>Kwik Klin</b><span>Staff</span></div></div>
+    <h1>Login · लॉगिन</h1>
+    <p class="sub">Staff: the owner gives you these. Shop owner: the number and password you signed up with.</p>
+    <label for="lg-phone">Mobile number</label>
+    <input id="lg-phone" type="tel" inputmode="numeric" autocomplete="username" placeholder="98xxxxxxxx" maxlength="15">
+    <label for="lg-pass">Password</label>
+    <div class="pwrap">
+      <input id="lg-pass" type="password" autocomplete="current-password" placeholder="••••••">
+      <button type="button" id="lg-eye" class="eye" aria-label="Show password">👁</button>
+    </div>
+    <div id="lg-err" class="err" role="alert"></div>
+    <button id="lg-go" class="btn go wide">Login</button>
+    <p class="hint">Lost your password? Staff: ask the owner. Owner: <a href="/join#login">reset it here</a>.</p>
+    <button type="button" id="lg-install" class="btn ghost wide" hidden>📲 Install app · ऐप इंस्टॉल करें</button>
+  </div>
+</section>
+
+<!-- Solo, Google / bina number ka signup: app ka login number par hai — ek baar -->
+<section id="ownerphone" class="login" hidden>
+  <div class="sheet">
+    <div class="mark spaced"><i>KK</i><div><b>Kwik Klin</b><span>Solo</span></div></div>
+    <h1>Your mobile number · आपका नंबर</h1>
+    <p class="sub">Just once. Your app uses this number, and it is the number we connect to WhatsApp for your shop. We will send a code on WhatsApp to confirm it.</p>
+    <label for="op-phone">Mobile number</label>
+    <input id="op-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98xxxxxxxx" maxlength="15">
+    <div id="op-codebox" hidden>
+      <label for="op-code">6-digit code from WhatsApp</label>
+      <input id="op-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="••••••" maxlength="6">
+      <p class="hint" id="op-sent"></p>
+    </div>
+    <div id="op-err" class="err" role="alert"></div>
+    <button id="op-go" class="btn go wide">Send code · कोड भेजें</button>
+    <button type="button" id="op-again" class="btn ghost wide" hidden>Change number / resend code</button>
+  </div>
+</section>
+
+<section id="app" class="app" hidden>
+  <header class="top">
+    <div class="who"><b id="who">—</b><span id="whoRole"></span></div>
+    <div class="acts">
+      <button id="btn-scan" class="iconbtn" aria-label="Scan garment tags" hidden><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-scan"/></svg></button>
+      <button id="btn-bell" class="iconbtn" aria-label="Replies"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-bell"/></svg><span id="bellN" class="bell-n" hidden>0</span></button>
+      <button id="btn-refresh" class="iconbtn" aria-label="Refresh"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg></button>
+    </div>
+  </header>
+
+  <div id="installbar" class="banner blue" hidden>
+    Install this on your phone like an app
+    <button class="linkbtn" id="btn-install">Install</button>
+  </div>
+  <!-- iPhone par Safari install ka button nahi deta — tareeka batana padta hai -->
+  <div id="iosinstall" class="banner blue" hidden>
+    <span>Install on iPhone: tap <b>Share</b> <span aria-hidden="true">⬆</span> then <b>Add to Home Screen</b></span>
+    <button class="linkbtn" id="ios-hide">OK</button>
+  </div>
+  <div id="asbanner" class="banner" hidden>
+    <span id="as-text"></span>
+    <button class="linkbtn" id="as-exit">Exit</button>
+  </div>
+  <div id="pwbanner" class="banner" hidden>
+    First login — please change your password.
+    <button class="linkbtn" id="pw-open">Change</button>
+  </div>
+
+  <section id="urgent-alert" class="urgent-alert" role="alert" aria-live="assertive" hidden>
+    <div class="urgent-alert-mark" aria-hidden="true">!</div>
+    <div class="urgent-alert-copy">
+      <strong>🚨 URGENT — DO THIS NOW</strong>
+      <span id="urgent-alert-title">New high-priority work needs your attention.</span>
+      <small id="urgent-alert-detail">Please check the task immediately.</small>
+    </div>
+    <div class="urgent-alert-actions">
+      <button id="urgent-alert-open" class="btn urgent-alert-open" type="button">Open work</button>
+      <button id="urgent-alert-dismiss" class="urgent-alert-dismiss" type="button" aria-label="Dismiss urgent alert">×</button>
+    </div>
+  </section>
+  <div id="today" class="today" hidden></div>
+  <button id="latebar" class="latebar" hidden></button>
+  <nav class="chips" id="chips"></nav>
+  <div class="searchrow" id="searchrow" hidden>
+    <input id="q" type="search" placeholder="Bill number or customer name" autocomplete="off">
+  </div>
+  <main id="list" class="list"></main>
+
+  <nav class="bottom" id="nav"></nav>
+</section>
+
+<div id="modal-ov" class="modal-ov"><div class="modal" role="dialog" aria-modal="true"><div id="modal-body"></div></div></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<pre id="receipt" aria-hidden="true"></pre>
+
+<script src="/admin/static/kk-labels.js?v=1" defer></script>
+<script src="/admin/static/kk-bill.js?v=4" defer></script>
+<script src="/admin/static/plan-ring.js?v=1" defer></script>
+<script src="/admin/static/kk-ds.js?v=2" defer></script>
+<script src="/admin/static/staff.js?v=s59" defer></script>
+<script src="/admin/static/kk-passkey.js?v=1" defer></script>
+<script src="/admin/static/solo.js?v=s53" defer></script>
+<script src="/admin/static/staff-scan.js?v=2" defer></script>
+</body>
+</html>

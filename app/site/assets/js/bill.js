@@ -1,0 +1,96 @@
+/* Customer bill page: pick the right UPI deep link for the device.
+   Android -> intent:// (opens that exact app), iPhone -> app scheme,
+   desktop -> no app to open, so show the QR to scan with a phone. */
+(function () {
+  var ua = navigator.userAgent || "";
+  var android = /Android/i.test(ua);
+  var ios = /iPhone|iPad|iPod/i.test(ua);
+  if (!android && !ios) document.body.classList.add("is-desktop");
+  document.querySelectorAll("[data-android]").forEach(function (a) {
+    if (android) a.href = a.getAttribute("data-android");
+    else if (ios) a.href = a.getAttribute("data-ios");
+  });
+  var btn = document.getElementById("copy-vpa");
+  if (btn && navigator.clipboard) {
+    btn.addEventListener("click", function () {
+      navigator.clipboard.writeText(btn.getAttribute("data-vpa")).then(function () {
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+      });
+    });
+  } else if (btn) {
+    btn.hidden = true;
+  }
+
+  /* Live: the shop moves the order (picked up, washing, ready, delivered)
+     or records a payment -> this open page refreshes itself. Tiny poll,
+     only while the tab is visible; also re-checks when the customer
+     comes back to the tab. */
+  var body = document.body, live = body.getAttribute("data-live"), v = body.getAttribute("data-v");
+  if (live && v && window.fetch) {
+    var busy = false;
+    var check = function () {
+      if (busy || document.hidden) return;
+      busy = true;
+      fetch(live, { cache: "no-store", credentials: "omit" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && j.v && j.v !== v) location.reload(); })
+        .catch(function () {})
+        .then(function () { busy = false; });
+    };
+    setInterval(check, 15000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+  }
+})();
+
+
+// Razorpay checkout is opt-in (button click only). The server creates a
+// signed, order-specific payment link; the payment is reconciled by webhook.
+(function () {
+  var button = document.getElementById("razorpay-pay");
+  if (!button) return;
+  var labelEl = button.querySelector(".pay-online-label") || button;
+  var idleText = labelEl.textContent;
+  function idle() {
+    button.disabled = false;
+    button.classList.remove("is-busy");
+    labelEl.textContent = idleText;
+  }
+  // Razorpay se "Back" dabaya to browser purana page (bfcache) dikhata hai —
+  // button "Opening…" par atka na rahe
+  window.addEventListener("pageshow", function (ev) { if (ev.persisted) idle(); });
+  button.addEventListener("click", function () {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.classList.add("is-busy");
+    labelEl.textContent = "Opening secure payment…";
+    var error = document.getElementById("razorpay-error");
+    if (error) error.hidden = true;
+    fetch("/b/" + encodeURIComponent(button.getAttribute("data-token")) + "/razorpay-link", {
+      method: "POST",
+      headers: { "Accept": "application/json" },
+      credentials: "same-origin",
+      cache: "no-store"
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (!r.ok) {
+          var failed = new Error(data.detail || "Online payment is unavailable.");
+          failed.settled = r.status === 409;   // paisa aa chuka: UPI dikha to dobara kat sakta hai
+          throw failed;
+        }
+        return data;
+      });
+    }).then(function (data) {
+      if (!data.url || !/^https:\/\//i.test(data.url)) throw new Error("Payment provider returned an invalid link.");
+      location.href = data.url;
+    }).catch(function (err) {
+      idle();
+      var upi = document.getElementById("upi-fallback");
+      if (upi && !err.settled) upi.hidden = false;
+      if (error) {
+        error.textContent = err.message || "Could not start payment. Please try again.";
+        error.hidden = false;
+      }
+    });
+  });
+})();

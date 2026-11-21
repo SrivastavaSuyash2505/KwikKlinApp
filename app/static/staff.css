@@ -1,0 +1,814 @@
+/* Kwik Klin — staff panel.
+ *
+ * Ye app dhoop mein, ek haath se, geele haathon se, sasti screen par
+ * chalti hai. Isliye do faisle poore design par lage hain:
+ *
+ * 1. SaaS-cards nahi, DUKAAN KA REGISTER. Har kaam ek line hai — baaye
+ *    rang ki patti (status), phir date, phir grahak. Wahi cheez jo ye log
+ *    kaagaz ke bahi-khate mein pehle se padhte hain, isliye seekhna nahi
+ *    padta. Cards ke bajaye hairline se bante rows: ek screen mein teen
+ *    ke bajaye aath kaam dikhte hain.
+ * 2. Rang jaankari hai, sajावट nahi. Har status ka apna rang — patti ka
+ *    rang dekh kar hi pata chal jaye ki ye pickup hai ya delivery, bina
+ *    padhe. Brand blue sirf ek jagah: jo button dabana hai.
+ *
+ * Fonts: system stack. 3G par 200KB ka webfont utaarna is aadmi ke saath
+ * anyay hai. Numbers tabular hain — is app mein content hi numbers hai.
+ */
+
+:root {
+  /* Sab kuch tokens.css se. Ye file pehle se us design ke sabse kareeb thi
+   * (audit ne isi ko reference maana), isliye yahan koi value badli nahi —
+   * sirf naam jod diye gaye hain shared tokens ke. Local naam bane hue hain
+   * kyunki poori file unhi se likhi hai, aur unhe ek saath badalna is phase
+   * ka kaam nahi. */
+  --paper: var(--bg);
+  --sheet: var(--surface);
+  --rule: var(--border);
+  --rule-2: var(--border-soft);
+
+  /* Status = rang. Ye sirf theme nahi, ye label hai. */
+  --pickup: var(--info);       /* lene jaana         */
+  --wash: var(--busy);         /* dhulai chal rahi   */
+  --ready: var(--success);     /* taiyar             */
+  --deliver: var(--warning);   /* pahunchana         */
+  --late: var(--error);        /* der ho gayi        */
+  --ok-bg: var(--success-soft);
+  --late-bg: var(--error-soft);
+
+  --r: var(--r-md);
+  /* Webfont NAHI — dekho tokens.css mein --font-system ka comment. */
+  --font: var(--font-system);
+  --shadow-up: 0 -1px 0 var(--rule);
+}
+
+* { box-sizing: border-box; }
+/* clip, hidden nahi: hidden body ko scroll box bana deta hai aur New Bill ki sticky
+   patti (total, Next) chipakne ke bajaye bottom menu ke peeche chali jaati thi */
+html, body { max-width: 100%; overflow-x: hidden; overflow-x: clip; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-text-size-adjust: 100%;
+  /* Amount, ginti, order number — sab number hai. Tabular figures se
+     column seedhe baithte hain aur badalte waqt hilte nahi. */
+  font-variant-numeric: tabular-nums;
+}
+button, input, select, textarea { font: inherit; font-size: 16px; }  /* 16px = iOS zoom nahi */
+img { max-width: 100%; height: auto; }
+
+/* ─── boot ───────────────────────────────────────────────────────────── */
+/* Jab tak server ne nahi bataya ki ye aadmi andar hai ya nahi, na login
+   dikhti hai na app — warna har refresh par login ek pal ko jhalakta hai. */
+.boot {
+  min-height: 100dvh; display: grid; place-content: center; justify-items: center;
+  gap: 16px; background: var(--ink); color: #fff;
+}
+
+/* ─── login ──────────────────────────────────────────────────────────── */
+/* minmax(0,1fr): auto column lambi line ke hisaab se failta aur card phone se bahar jaata tha */
+.login { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: 20px; background: var(--ink); }
+.login .sheet { background: var(--sheet); border-radius: 16px; padding: 26px 22px; width: 100%; max-width: 360px; min-width: 0; }
+.login h1 { font-size: 1.2rem; margin: 0 0 4px; letter-spacing: -.01em; }
+.login .sub { color: var(--ink-3); font-size: 13.5px; margin: 0 0 20px; white-space: normal; overflow: visible; }
+
+.mark { display: flex; align-items: center; gap: 10px; }
+.mark i {
+  width: 38px; height: 38px; border-radius: 11px; background: var(--brand);
+  color: #fff; display: grid; place-items: center; font-weight: 700;
+  font-style: normal; font-size: 14px; letter-spacing: -.02em;
+}
+.mark b { font-size: 15px; letter-spacing: -.01em; }
+.mark span { display: block; color: var(--ink-3); font-size: 12px; }
+.boot .mark b, .boot .mark span { color: #fff; }
+.boot .mark span { opacity: .6; }
+.boot-off { display: grid; justify-items: center; gap: 14px; max-width: 280px; padding: 0 16px; text-align: center; }
+.boot-off p { margin: 0; color: rgba(255,255,255,.8); font-size: 15px; line-height: 1.45; }
+.boot-off[hidden] { display: none; }
+
+label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 14px 0 6px; }
+input, select, textarea {
+  width: 100%; padding: 11px 13px; min-height: var(--tap);
+  border: 1.5px solid var(--rule); border-radius: var(--r);
+  background: var(--sheet); color: var(--ink);
+}
+textarea { min-height: 84px; line-height: 1.45; }
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--brand); outline-offset: 1px; border-color: transparent;
+}
+input:disabled { background: var(--rule-2); color: var(--ink-3); }
+.pwrap { position: relative; }
+.pwrap input { padding-right: 50px; }
+.eye {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; font-size: 17px; min-height: var(--tap);
+  min-width: var(--tap); cursor: pointer; color: var(--ink-3);
+}
+.err { color: var(--late); font-size: 13px; min-height: 17px; margin-top: 8px; }
+.hint { color: var(--ink-3); font-size: 12.5px; margin: 14px 0 0; }
+
+/* ─── buttons ────────────────────────────────────────────────────────── */
+.btn {
+  background: var(--ink); color: #fff; border: 0; border-radius: var(--r);
+  padding: 10px 16px; min-height: var(--tap); font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  text-decoration: none;
+}
+/* Safed text iske upar baithta hai, isliye --brand-strong: 5.18:1 (AA).
+   --brand par wo 3.56 hai — bade text ke liye theek, button ke label ke
+   liye nahi. */
+.btn.go { background: var(--brand-strong); }   /* ek hi jagah bold rang */
+.btn.ghost { background: var(--sheet); color: var(--ink); border: 1.5px solid var(--rule); }
+.btn.danger { background: var(--late); }
+.btn.money { background: var(--deliver); }
+.btn.wide { width: 100%; margin-top: 16px; white-space: normal; height: auto; line-height: 1.25; }
+.btn.sm { min-height: 38px; padding: 7px 12px; font-size: 13.5px; border-radius: 8px; }
+.btn:disabled { opacity: .5; }
+.btn:active { transform: translateY(1px); }
+.linkbtn { background: none; border: 0; color: var(--brand-ink); font-weight: 600; text-decoration: underline; cursor: pointer; padding: 4px; }
+
+.spin {
+  display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px;
+}
+.btn.ghost .spin { border-color: rgba(19,24,32,.2); border-top-color: var(--ink); }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
+
+/* ─── shell ──────────────────────────────────────────────────────────── */
+.app { padding-bottom: 74px; }
+
+.top {
+  position: sticky; top: 0; z-index: 8; background: var(--ink); color: #fff;
+  padding: 11px clamp(14px, 4vw, 22px);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.top .who b { font-size: 15px; letter-spacing: -.01em; }
+.top .who span { display: block; font-size: 12px; color: rgba(255,255,255,.6); }
+.top .acts { display: flex; align-items: center; gap: 4px; }
+.iconbtn {
+  background: none; border: 0; color: #fff; font-size: 17px;
+  min-height: 40px; min-width: 40px; border-radius: 9px; cursor: pointer; position: relative;
+}
+.iconbtn:active { background: rgba(255,255,255,.12); }
+.iconbtn.turn { animation: sp .6s ease; }
+/* Ghanti par ginti — bina ginti ke ghanti par koi nazar nahi daalta */
+.bell-n {
+  position: absolute; top: 4px; right: 3px; min-width: 17px; height: 17px;
+  border-radius: 9px; background: var(--brand-strong); color: var(--on-brand);
+  font-size: 10.5px; font-weight: 700; line-height: 17px; padding: 0 4px;
+}
+
+.banner {
+  background: #fffbeb; border-bottom: 1px solid #fde68a; color: #854d0e;
+  padding: 9px clamp(14px, 4vw, 22px); font-size: 13px;
+  display: flex; gap: 10px; align-items: center; justify-content: space-between;
+}
+.banner.blue { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+/* ─── aaj ka hisaab: ek lakeer, teen ginti ─────────────────────────── */
+/* Pehle ye teen tiles the. Tiles jagah khaate hain aur pehla kaam neeche
+   dhakel dete hain — jabki khulte hi kaam dikhna chahiye. Ab ek line. */
+.today {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  padding: 11px clamp(14px, 4vw, 22px);
+  background: var(--sheet); border-bottom: 1px solid var(--rule);
+  font-size: 13px; color: var(--ink-3);
+}
+.today b { display: block; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+.today .left b { color: var(--brand); }
+.today .cash b { color: var(--ready); }
+
+/* ─── filter chips ───────────────────────────────────────────────────── */
+.chips {
+  display: flex; gap: 7px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: 11px clamp(14px, 4vw, 22px); scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chips button {
+  background: var(--sheet); border: 1.5px solid var(--rule); border-radius: 999px;
+  padding: 7px 13px; font-size: 13.5px; font-weight: 600; color: var(--ink-2);
+  white-space: nowrap; min-height: 38px; cursor: pointer;
+}
+.chips button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chips .n { margin-left: 5px; opacity: .65; font-weight: 700; }
+
+.searchrow { padding: 0 clamp(14px, 4vw, 22px) 10px; display: flex; gap: 8px; }
+.searchrow input { min-height: 42px; }
+
+/* ─── register: kaam ki lakeerein ────────────────────────────────────── */
+.list { padding-bottom: 10px; }
+.reg { background: var(--sheet); border-block: 1px solid var(--rule); }
+.row {
+  display: grid; grid-template-columns: 4px 58px 1fr; gap: 0 11px;
+  padding: 12px clamp(14px, 4vw, 22px) 12px 0;
+  border-bottom: 1px solid var(--rule-2);
+  align-items: start;
+}
+.row:last-child { border-bottom: 0; }
+/* Baaye kinare ki patti — status ka rang. Ek nazar mein pata chal jaata
+   hai ki ye lene jaana hai, dhulai mein hai, ya pahunchana hai. */
+.spine { align-self: stretch; border-radius: 0 3px 3px 0; background: var(--ink-3); }
+.spine.pickup { background: var(--pickup); }
+.spine.wash { background: var(--wash); }
+.spine.ready { background: var(--ready); }
+.spine.deliver { background: var(--deliver); }
+.spine.late { background: var(--late); }
+
+/* Register ka date column — kaagaz wale khaate ki tarah baaye margin mein */
+.when { padding-top: 1px; }
+.when b { display: block; font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+.when span { display: block; font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+.when.late b { color: var(--late); }
+
+.body { min-width: 0; }
+.line1 { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
+.line1 b { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.line1 .amt { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.line1 .amt.due { color: var(--deliver); }
+.sub {
+  font-size: 12.5px; color: var(--ink-3); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tag {
+  display: inline-block; font-size: 11px; font-weight: 700; border-radius: 5px;
+  padding: 1px 6px; margin-right: 5px; vertical-align: 1px;
+}
+.tag.pickup { background: #eef2ff; color: var(--pickup); }
+.tag.wash { background: #f0fdfa; color: var(--wash); }
+.tag.ready { background: var(--ok-bg); color: var(--ready); }
+.tag.deliver { background: #fffbeb; color: var(--deliver); }
+.tag.late { background: var(--late-bg); color: var(--late); }
+.tag.ask { background: #f5f3ff; color: #6d28d9; }
+.tag.task { background: var(--rule-2); color: var(--ink-2); }
+
+.acts { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+/* flex-basis auto + min-width auto = button apne text se chhota ho hi nahi
+   sakta: jagah kam padi to agli line, par text pill se bahar kabhi nahi.
+   grow 0 isliye ki row ke button apne text jitne rahein — poori chaudai
+   mein khinche hue button "Ho gaya" ko ek bada laal bar bana dete hain,
+   aur wo baaki actions se zyada zaroori dikhne lagta hai. */
+.acts .btn { flex: 0 1 auto; min-width: auto; }
+
+.empty {
+  text-align: center; color: var(--ink-3); font-size: 13.5px;
+  padding: 44px 20px; line-height: 1.6;
+}
+.empty b { display: block; color: var(--ink-2); font-size: 15px; margin-bottom: 4px; }
+
+/* ─── sheets (cards jahan sach mein card chahiye) ────────────────────── */
+.card {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 15px; margin: 12px clamp(14px, 4vw, 22px);
+}
+.card h3 { margin: 0 0 10px; font-size: 15px; letter-spacing: -.01em; }
+.kv { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; font-size: 13.5px; color: var(--ink-3); }
+.kv b { color: var(--ink); font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+/* ─── naya bill ──────────────────────────────────────────────────────── */
+.frow { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); }
+.frow .qty { max-width: 120px; }
+.cart { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 8px; }
+
+/* Cart ki har line ab do manzil hai: upar naam+rakam, neeche ginti aur
+   daam badalne ke control. Ek hi line par thoos dene par 360px ke phone
+   par rate ka box teen akshar ka bachta hai. */
+.cartrow { padding: 9px 0; border-bottom: 1px solid var(--rule-2); }
+.cartrow:last-of-type { border-bottom: 0; }
+.ci-name { flex: 1 1 auto; min-width: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.ci-name small { color: var(--ink-3); font-size: 11.5px; }
+.ci-amt { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.cartrow .rm {
+  background: none; border: 0; color: var(--late); font-size: 15px;
+  min-height: 32px; min-width: 32px; cursor: pointer; flex: 0 0 auto;
+}
+/* Bill print — chhota thermal printer. Text server par 32/48 akshar par
+   kata aata hai; Courier 0.6em/akshar, 7.6pt par 58mm/80mm mein poora. */
+#receipt { display: none; }
+@media print {
+  @page { margin: 0; }
+  body > *:not(#receipt) { display: none !important; }
+  html, body { background: #fff !important; min-height: 0 !important; height: auto !important; padding: 0 !important; }
+  #receipt { display: block; position: static; margin: 0; padding: 1mm; white-space: pre; font-family: "Courier New", monospace; color: #000; font-size: 7.6pt; line-height: 1.25; }
+  #receipt .rcpt-logo { display: block; margin: 0 auto 2mm; max-width: 60%; max-height: 18mm; object-fit: contain;
+    filter: grayscale(1) contrast(1.35); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #receipt.paper-58 { width: 58mm; }
+  #receipt.paper-80 { width: 80mm; }
+}
+
+/* ─── kaam ki row: tap = detail; order detail + delivery popup ─────── */
+.row.tappable { cursor: pointer; }
+.row.tappable:active { background: var(--rule-2); }
+.od-block { border: 1px solid var(--rule); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+.od-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--ink-3); margin-bottom: 4px; }
+.od-head b { color: var(--ink); font-size: 15px; }
+.od-line { padding: 7px 0; border-top: 1px solid var(--rule-2); }
+.od-line:first-of-type { border-top: 0; }
+.od-top, .od-sub { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14.5px; }
+.od-top small { color: var(--ink-3); font-weight: 400; font-size: 12px; }
+.od-sub { padding: 3px 0 0 12px; color: var(--ink-2); font-size: 14px; }
+.dl-tag { font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 1px 6px; margin-left: 4px; white-space: nowrap; }
+.dl-tag.ok { background: var(--ok-bg, #ecfdf3); color: #067647; }
+.dl-tag.part { background: #fef3f2; color: var(--late); }
+.late-t { color: var(--late); }
+/* IMP_006: order popup — stage mein deri */
+.delay-bar { background: #fef3f2; color: var(--late); border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 600; margin: 6px 0 10px; overflow-wrap: anywhere; }
+.dl-list { margin-top: 10px; border: 1px solid var(--rule); border-radius: 12px; max-height: 48vh; overflow-y: auto; }
+.dl-group { padding: 8px 12px 4px; font-size: 12px; font-weight: 700; color: var(--ink-3); background: var(--rule-2); text-transform: uppercase; letter-spacing: .03em; }
+.dl-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--rule-2); min-height: 52px; }
+.dl-row:first-child { border-top: 0; }
+.dl-name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.dl-name small { color: var(--ink-3); font-weight: 400; font-size: 12px; }
+.dl-of { color: var(--ink-3); font-size: 12.5px; min-width: 34px; }
+.dl-row input[type=checkbox] { width: 26px; height: 26px; accent-color: var(--brand); }
+.dl-sum { margin: 10px 0 0; font-size: 14px; color: var(--ink-2); }
+
+/* ⚡ Urgent toggle — band par dashed, on par narangi */
+.urgbtn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: var(--tap, 48px); padding: 10px 14px; border: 1.5px dashed var(--rule); border-radius: 12px;
+  background: var(--sheet); color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; text-align: left;
+}
+.urgbtn small { font-weight: 500; color: var(--ink-3); font-size: 12.5px; }
+.urgbtn.on { border-style: solid; border-color: var(--brand); background: var(--brand-soft, #eef4ff); color: var(--brand-ink, #1a45c4); }
+.urgbtn.on small { color: var(--brand-ink, #1a45c4); }
+#b-urgbox { margin-top: 8px; }
+.s-row.urg { color: var(--brand-ink, #1a45c4); }
+
+/* cart: ek kapda = ek line (naam | − qty + | rakam | ✕) */
+.ci-line { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 8px; }
+.ci-line .ci-name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.ci-line .ci-name small { color: var(--ink-3); font-weight: 400; font-size: 12px; }
+.ci-rate {
+  display: block; border: 0; background: none; padding: 3px 0 0; font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--ink-3); cursor: pointer; text-align: left;
+}
+.ci-rate.changed { color: var(--brand-ink, #1a45c4); font-weight: 600; }
+.ci-line .stepper.sm .step { width: 34px; }
+.ci-line .stepper.sm input { width: 46px; }
+.ci-line .ci-amt { min-width: 52px; text-align: right; }
+.cartrow .ratebox { margin-top: 8px; max-width: 220px; }
+
+/* ─── kapde jodna: service dropdown + item search + patli list ────────
+   Ek line = ek kapda: naam · daam · ＋ (ya kitne jude). Poori line tap
+   hoti hai — chhoti screen par 8-10 kapde ek nazar mein. */
+.item-list {
+  margin-top: 10px; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden;
+  max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.item-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px;
+  border: 0; border-bottom: 1px solid var(--rule-2); background: var(--sheet); color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.item-row:last-child { border-bottom: 0; }
+.item-row:active { background: var(--rule-2); }
+.item-row.in { background: var(--brand-soft, #eef4ff); }
+.ir-name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.ir-name small { color: var(--ink-3); font-weight: 400; font-size: 12px; }
+.ir-price { color: var(--ink-3); font-size: 13.5px; white-space: nowrap; }
+.ir-add {
+  flex: 0 0 auto; min-width: 34px; height: 30px; padding: 0 8px; border-radius: 15px; display: grid; place-items: center;
+  border: 1.5px solid var(--brand); color: var(--brand-ink, #1a45c4); font-weight: 700; font-size: 15px;
+}
+.ir-add.n { background: var(--brand); border-color: var(--brand); color: #fff; font-size: 13px; }
+.item-row.create { color: var(--brand-ink, #1a45c4); font-weight: 700; justify-content: flex-start; background: var(--sheet); }
+.ir-head { padding: 8px 12px 4px; font-size: 12px; font-weight: 700; color: var(--ink-3); background: var(--rule-2); text-transform: uppercase; letter-spacing: .04em; }
+.ir-none { padding: 12px; margin: 0; color: var(--ink-3); font-size: 14px; }
+.item-row.kgrow { min-height: 54px; }
+.item-row.kgrow .ir-name { font-size: 15.5px; }
+details.fold { border: 1px solid var(--rule); border-radius: 12px; padding: 0 12px; }
+details.fold > summary {
+  list-style: none; cursor: pointer; padding: 12px 0; font-size: 15px; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+}
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary small { color: var(--ink-3); font-weight: 500; font-size: 13px; }
+details.fold > summary::after { content: "▾"; color: var(--ink-3); }
+details.fold[open] > summary::after { content: "▴"; }
+details.fold[open] { padding-bottom: 12px; }
+
+/* KG line ke kapde (ginti) */
+.ci-pieces { margin-top: 6px; }
+.ci-pieces .linkbtn { padding: 4px 0; }
+.ci-pieces small { display: block; color: var(--ink-3); font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* − 2 + : geele haath aur ek angootha. Keyboard tabhi khule jab sach
+   mein koi anokhi ginti bharni ho. */
+.stepper { display: flex; align-items: stretch; }
+.stepper input {
+  width: 62px; text-align: center; border-radius: 0;
+  border-left: 0; border-right: 0; min-height: var(--tap); padding: 8px 2px;
+}
+.stepper .step {
+  flex: 0 0 auto; width: 42px; min-height: var(--tap);
+  background: var(--sheet); border: 1.5px solid var(--rule);
+  font-size: 19px; font-weight: 700; color: var(--ink-2); cursor: pointer;
+}
+.stepper .step:first-child { border-radius: var(--r) 0 0 var(--r); }
+.stepper .step:last-child { border-radius: 0 var(--r) var(--r) 0; }
+.stepper .step:active { background: var(--rule-2); }
+.stepper.sm input { width: 48px; min-height: 40px; }
+.stepper.sm .step { width: 36px; min-height: 40px; font-size: 17px; }
+
+/* Daam badalne ka box. Card ka daam neeche chhota likha rehta hai —
+   bina uske do din baad koi nahi bata sakta ki chhoot di gayi thi. */
+.ratebox { position: relative; flex: 1 1 auto; min-width: 0; }
+.ratebox .cur {
+  position: absolute; left: 10px; top: 9px; color: var(--ink-3);
+  font-size: 13.5px; pointer-events: none;
+}
+.ratebox input { min-height: 40px; padding: 8px 10px 8px 24px; font-size: 15px; }
+.ratebox small { display: block; font-size: 10.5px; color: var(--ink-3); margin-top: 2px; }
+
+/* Hisaab ka khaka */
+.sums { border-top: 1.5px solid var(--rule); margin-top: 8px; padding-top: 9px; }
+.s-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 13.5px; color: var(--ink-3); }
+.s-row span:last-child { color: var(--ink); font-weight: 600; }
+.s-row.off span:last-child { color: var(--ready); }
+.s-row.big { font-size: 16px; font-weight: 700; color: var(--ink); padding-top: 6px; }
+.s-row.warn span { color: var(--deliver); font-weight: 700; }
+
+/* Chhoot: ₹/% ek taraf, ginti doosri — dono ek hi line par, kyunki ye ek
+   hi sawaal hai. */
+.discrow { display: flex; gap: 9px; align-items: center; }
+.discrow input { flex: 1 1 auto; min-width: 0; }
+.pick.sm { flex: 0 0 auto; }
+.pick.sm .pickbtn { min-width: 52px; padding: 9px 10px; }
+.pick.mb { margin-bottom: 12px; }
+
+/* Neeche chipki hui patti: kul rakam hamesha aankh ke saamne. Pehle
+   "Create bill" cart ke neeche tha aur das item ke baad scroll ho kar
+   gayab ho jaata tha. */
+.paybar {
+  position: sticky; bottom: 74px; z-index: 7;
+  display: flex; align-items: center; gap: 12px;
+  margin: 12px clamp(14px, 4vw, 22px);
+  padding: 11px 13px; border-radius: 14px;
+  background: var(--ink); color: #fff;
+  box-shadow: 0 8px 24px rgba(19,24,32,.20);
+}
+.paybar-sum { flex: 1 1 auto; min-width: 0; }
+.paybar-sum b { display: block; font-size: 21px; font-weight: 700; letter-spacing: -.02em; }
+.paybar-sum span { display: block; font-size: 11.5px; color: rgba(255,255,255,.65); }
+.paybar .btn { flex: 0 0 auto; }
+
+/* Sujhaav mein udhaar — chunne se PEHLE dikhna chahiye */
+.acdue { margin-left: auto; padding-left: 10px; color: var(--deliver); font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.picked.owes { color: var(--brand-ink); background: #eef4ff; }
+
+.ac-wrap { position: relative; }
+.acp {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 15; background: var(--sheet);
+  border: 1.5px solid var(--rule); border-top: 0; border-radius: 0 0 var(--r) var(--r);
+  box-shadow: 0 10px 26px rgba(19,24,32,.10); max-height: 240px; overflow-y: auto;
+}
+.acp:empty { display: none; }
+.acp > div { padding: 11px 13px; font-size: 13.5px; min-height: var(--tap); display: flex; align-items: center; cursor: pointer; border-top: 1px solid var(--rule-2); }
+.acp > div:first-child { border-top: 0; }
+.acp > div:active { background: var(--rule-2); }
+.acp .none { color: var(--ink-3); font-size: 12.5px; cursor: default; }
+.picked { margin-top: 8px; font-size: 13px; font-weight: 600; color: #065f46; background: var(--ok-bg); border-radius: 8px; padding: 8px 11px; }
+
+/* ─── bottom nav ─────────────────────────────────────────────────────── */
+.bottom {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; display: flex;
+  background: var(--sheet); box-shadow: var(--shadow-up);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom button {
+  flex: 1; background: none; border: 0; padding: 8px 2px 7px; min-height: 58px;
+  font-size: 11px; font-weight: 600; color: var(--ink-3); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.bottom button i { font-style: normal; font-size: 18px; line-height: 1; }
+.bottom button.on { color: var(--brand); }
+
+/* ─── modal ──────────────────────────────────────────────────────────── */
+.modal-ov { position: fixed; inset: 0; background: rgba(19,24,32,.45); display: none; align-items: flex-end; justify-content: center; z-index: 30; }
+.modal-ov.open { display: flex; }
+.modal {
+  background: var(--sheet); border-radius: 18px 18px 0 0; width: 100%; max-width: 520px;
+  max-height: 90dvh; overflow: auto;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+}
+.modal h3 { margin: 0 0 4px; font-size: 16.5px; letter-spacing: -.01em; }
+.modal .said { color: var(--ink-3); font-size: 13px; margin: 0 0 14px; }
+.btnrow { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.btnrow .btn { flex: 1 1 auto; min-width: auto; }
+
+/* Bag sheet (kg): oonchai = keyboard ke upar ki jagah (JS overlay ko
+   visualViewport par bithata hai). Upar wazan + search tike, sirf list scroll. */
+.modal-ov.bag .modal {
+  display: flex; flex-direction: column; height: min(640px, 92dvh, 100%); max-height: none;
+  overflow: hidden; padding: 14px 14px calc(12px + env(safe-area-inset-bottom));
+}
+.modal-ov.bag #modal-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.bag-head { display: flex; align-items: center; gap: 10px; }
+.bag-head h3 { flex: 1 1 auto; min-width: 0; margin: 0; }
+.bag-head h3 small { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--ink-3); }
+.bag-weigh { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.bag-weigh label { margin: 0; font-weight: 700; }
+.bag-weigh .stepper { flex: 1 1 auto; min-width: 0; }
+.bag-weigh .stepper input { flex: 1 1 0; width: 0; min-width: 0; text-align: center; font-size: 18px; font-weight: 700; }
+.bag-unit { font-weight: 700; color: var(--ink-3); }
+.modal-ov.bag .bag-list { flex: 1 1 auto; min-height: 0; max-height: none; margin-top: 8px; overscroll-behavior: contain; }
+
+/* Sawaal-jawab ka thread */
+.thread { display: flex; flex-direction: column; gap: 9px; margin: 4px 0 2px; }
+.msg { max-width: 86%; padding: 9px 12px; border-radius: 13px; font-size: 13.5px; line-height: 1.45; }
+.msg.staff { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+.msg.owner { align-self: flex-start; background: var(--rule-2); border-bottom-left-radius: 4px; }
+.msg .at { display: block; font-size: 10.5px; opacity: .6; margin-top: 3px; }
+
+.sharetext {
+  margin: 0; max-height: 36dvh; overflow: auto; background: var(--paper);
+  border: 1px solid var(--rule); border-radius: var(--r); padding: 11px 13px;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+  line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+}
+.bar { height: 7px; border-radius: 99px; background: var(--rule); overflow: hidden; margin: 12px 0 2px; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--ready); border-radius: 99px; transition: width .18s linear; }
+#ph-prev { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; }
+input[type=file] { padding: 9px; }
+
+/* ─── toasts ─────────────────────────────────────────────────────────── */
+/* Upar, aur click nahi rokte: neeche wale alert button ke upar baith jaate the */
+.toasts { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; }
+.toast { background: var(--ink); color: #fff; padding: 11px 14px; border-radius: 11px; font-size: 13.5px; border: 1px solid rgba(255,255,255,.22); box-shadow: 0 8px 24px rgba(19,24,32,.4); }
+.toast.err { background: var(--late); }
+
+/* ─── bade screen ────────────────────────────────────────────────────── */
+@media (min-width: 820px) {
+  .app { max-width: 780px; margin-inline: auto; padding-bottom: 20px; }
+  .reg, .top, .today { border-radius: 0; }
+  .bottom { position: sticky; max-width: 780px; margin: 14px auto 0; border: 1px solid var(--rule); border-radius: 14px; box-shadow: none; }
+  .toasts { left: auto; right: 24px; width: min(360px, 90vw); top: 16px; }
+  .modal-ov { align-items: center; }
+  .modal { border-radius: 18px; max-width: 540px; }
+  /* Bade screen par nav fixed nahi hai, isliye patti ko uski jagah
+     chhodne ki zaroorat bhi nahi. */
+  .paybar { bottom: 14px; }
+}
+
+[hidden] { display: none !important; }
+
+/* ─── chhoti utility classes ─────────────────────────────────────────
+   CSP `style-src 'self'` hai: inline style="..." browser chup-chaap gira
+   deta hai (koi error nahi, bas layout toota hua). Isliye har chhota
+   adjustment yahan class banta hai. */
+.mt0 { margin-top: 0; }
+.mt-xs { margin-top: 4px; }
+.note { white-space: normal; color: var(--ink-2); margin-top: 3px; }
+.paid-tick { color: var(--ready); }
+.stack { flex-direction: column; }
+.card.inset { margin: 10px 0; }
+.card.inset .sub { white-space: normal; margin: 6px 0 10px; }
+.mark.spaced { margin-bottom: 20px; }
+
+/* "Show more" + ginti — list ke ant mein, register se bahar */
+.morebar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px clamp(14px, 4vw, 22px); font-size: 12.5px; color: var(--ink-3);
+}
+
+/* "Kapde kahan hain" — do me se ek. Dropdown nahi: do hi jawab hain aur
+   dono ek nazar mein dikhne chahiye, ek tap mein chunne chahiye. */
+.pick { display: flex; gap: 8px; }
+.pickbtn {
+  flex: 1 1 auto; min-width: auto; min-height: var(--tap);
+  background: var(--sheet); border: 1.5px solid var(--rule); border-radius: var(--r);
+  padding: 10px 12px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+}
+.pickbtn.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+h3.mt-lg { margin-top: 20px; }
+
+/* ─── late ka banner ─────────────────────────────────────────────────
+   Late order list mein pehle se upar aata hai aur uski date laal hoti
+   hai — par wo tabhi dikhta hai jab aadmi neeche padhe. Ye patti khulte
+   hi aankh mein chubhti hai, aur ek tap mein sirf late kaam dikha deti
+   hai. Poori chaudai ka button hai, dhoop mein ek angoothe se dabne
+   laayak.
+
+   Rang late wala hi (--late), brand blue nahi: orange is app mein
+   "ye dabao" ka matlab rakhta hai, aur ye khabar hai, kaam nahi. */
+.latebar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; border: 0; border-bottom: 1px solid var(--rule);
+  padding: 11px clamp(14px, 4vw, 22px); min-height: var(--tap);
+  background: var(--late-bg); color: var(--late);
+  font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.latebar b { font-weight: 700; text-decoration: underline; white-space: nowrap; }
+.latebar:active { background: #ffe4e6; }
+/* Chhaant lagi hui ho to patti ulat jaati hai — ab ye "wapas jaao" hai,
+   aur khabar dobara chillane ki zaroorat nahi. */
+.latebar.on { background: var(--ink); color: #fff; border-bottom-color: var(--ink); }
+
+/* 🎁 reward chip on New bill */
+.rwchip { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0; padding:9px 11px; border-radius:12px; background:#eef4ff; border:1px solid #cfe0ff; font-size:14px; }
+.rwchip.on { background:#ecfdf5; border-color:#10b981; }
+.rwchip .btn { margin-left:auto; }
+
+
+/* ─── manager billing / communication refresh ─────────────────────── */
+.bill-card {
+  display: grid; grid-template-columns: 4px 1fr; margin: 10px 14px;
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 15px;
+  overflow: hidden; box-shadow: 0 2px 10px rgba(19,24,32,.04);
+}
+.bill-accent { background: var(--brand); }
+.bill-accent.paid { background: var(--ready); }
+.bill-accent.late { background: var(--late); }
+.bill-main { min-width: 0; padding: 13px 13px 12px; }
+.bill-topline { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.bill-no { font-size: 12px; color: var(--ink-3); font-weight: 700; }
+.bill-date { font-size: 11px; color: var(--ink-3); margin-left: 7px; }
+.bill-due { font-size: 14px; font-weight: 800; color: var(--deliver); white-space: nowrap; }
+.bill-due.paid { color: var(--ready); }
+.bill-customer { margin-top: 5px; font-size: 16px; }
+.bill-items { margin-top: 3px; color: var(--ink-3); font-size: 12.5px; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bill-progress { display:flex; align-items:center; gap:0; margin:12px 0 11px; overflow:hidden; }
+.bill-stage {
+  position:relative; flex:1 1 0; min-width:0; text-align:center; font-size:9.5px;
+  color:var(--ink-3); padding-top:17px; white-space:nowrap;
+}
+.bill-stage::before {
+  content:""; position:absolute; top:6px; left:0; right:0; height:2px; background:var(--rule);
+}
+.bill-stage:first-child::before { left:50%; }
+.bill-stage:last-child::before { right:50%; }
+.bill-stage::after {
+  content:""; position:absolute; top:1px; left:50%; width:11px; height:11px;
+  transform:translateX(-50%); border-radius:50%; background:var(--rule); border:2px solid var(--sheet); z-index:1;
+}
+.bill-stage.done { color:var(--ink-2); font-weight:700; }
+.bill-stage.done::before { background:var(--ready); }
+.bill-stage.done::after { background:var(--ready); }
+.bill-stage.current::after { background:var(--brand); box-shadow:0 0 0 3px var(--brand-soft, rgba(31, 90, 240,.12)); }
+.bill-actions { display:flex; gap:7px; flex-wrap:wrap; }
+.bill-actions .btn { flex:1 1 auto; min-width:0; }
+.bill-actions .bill-comm { flex:1.5 1 130px; }
+
+.comm-head, .status-head { display:flex; align-items:center; gap:11px; }
+.comm-icon, .status-icon {
+  width:42px; height:42px; border-radius:13px; display:grid; place-items:center;
+  background:#eff6ff; font-size:21px; flex:0 0 auto;
+}
+.status-icon { background:var(--ok-bg); color:var(--ready); }
+.comm-head h3, .status-head h3 { margin:0; }
+.comm-note { margin:5px 0 14px; color:var(--ink-3); font-size:13px; }
+.comm-menu, .status-list { display:flex; flex-direction:column; gap:8px; }
+.comm-option, .status-option {
+  width:100%; display:flex; align-items:center; gap:11px; text-align:left;
+  border:1.5px solid var(--rule); background:var(--sheet); border-radius:13px;
+  padding:11px 12px; min-height:64px; cursor:pointer; color:var(--ink);
+}
+.comm-option:active, .status-option:active { background:var(--rule-2); transform:translateY(1px); }
+.comm-option-icon {
+  width:38px; height:38px; border-radius:11px; display:grid; place-items:center;
+  background:var(--rule-2); font-size:18px; flex:0 0 auto;
+}
+.comm-option:nth-child(1) .comm-option-icon { background:#eff6ff; }
+.comm-option:nth-child(2) .comm-option-icon { background:#eef4ff; }
+.comm-option:nth-child(3) .comm-option-icon { background:#ecfdf5; }
+.comm-option:nth-child(4) .comm-option-icon { background:#f5f3ff; }
+.comm-option b, .status-option b { display:block; font-size:14px; }
+.comm-option small, .status-option small { display:block; color:var(--ink-3); font-size:11.5px; margin-top:2px; }
+.comm-arrow { margin-left:auto; font-size:24px; color:var(--ink-3); }
+.status-option .status-dot {
+  width:14px; height:14px; border-radius:50%; background:var(--rule); flex:0 0 auto;
+}
+.status-option:nth-child(7) .status-dot,
+.status-option:nth-child(8) .status-dot { background:var(--ready); }
+.status-option:nth-child(9) .status-dot { background:var(--brand); }
+
+/* Long customer bill URLs must wrap without inline styles (strict CSP). */
+.break-all { overflow-wrap: anywhere; word-break: break-all; }
+
+/* Aaj ke saare stop ek route mein (delivery) */
+.routebar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 12px;
+  background: var(--sheet); font-size: 14px;
+}
+.routebar .btn { flex: none; }
+/* chhota checkbox + likha, ek line mein (deliver ke baad photo) */
+.check-row {
+  display: flex; align-items: center; gap: 10px; margin: 12px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2);
+}
+.check-row input { width: 20px; height: 20px; min-height: 0; flex: none; }
+/* ginti bill se na mile to wo line laal */
+.dl-row.off .dl-name, .dl-row.off .dl-of { color: var(--late); font-weight: 700; }
+/* Team tab ke hisse: atke order, team */
+.sechead { margin: 14px 2px 8px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+.sechead:first-child { margin-top: 0; }
+
+/* Owner ka diya alag kaam — order ki row ke andar, apne Done ke saath */
+.job {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 8px; padding: 7px 8px 7px 10px; border-radius: 10px;
+  background: var(--rule-2); font-size: 13.5px; color: var(--ink-2);
+}
+.job span { min-width: 0; overflow-wrap: anywhere; }
+.job .btn { flex: 0 0 auto; }
+
+/* Tasks tab — card mein "when" ka column nahi, kaam ka naam hi sabse upar */
+.row.tcard { grid-template-columns: 4px 1fr; }
+.row.tcard .line1 b { white-space: normal; overflow-wrap: anywhere; }
+.bottom button i { position: relative; }
+.nav-n {
+  position: absolute; top: -4px; right: -10px; min-width: 17px; height: 17px;
+  border-radius: 9px; background: var(--brand-strong); color: var(--on-brand);
+  font-size: 10.5px; font-weight: 700; line-height: 17px; padding: 0 4px; font-style: normal;
+}
+/* 7 tab tak (manager) bhi chhote phone par label na toote */
+.bottom button { min-width: 0; }
+
+/* Delivery row: ek saaf kaam ka button + gol ⋯ (stretch nahi) */
+.acts.compact { align-items: center; flex-wrap: nowrap; }
+.acts.compact .btn.go { flex: 0 1 auto; min-width: 148px; max-width: 70%; }
+.acts.compact .btn.more {
+  flex: 0 0 42px; width: 42px; padding: 0; border-radius: 50%;
+  font-size: 18px; line-height: 1; display: grid; place-items: center;
+}
+/* Delivery ⋯ ka payment hisaab */
+.paysum { display: grid; gap: 6px; margin: 6px 0 14px; padding: 12px 14px; border-radius: 14px; background: var(--rule-2); }
+.paysum > div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--ink-2); }
+.paysum b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.paysum b.ok { color: #047857; }
+.paysum b.due { color: var(--late); }
+
+/* ─── Full details: saaf kapde, notes, hold ─────────────────────────── */
+/* Pehli line par border — .od-head ke baad wali line hi pehli hai */
+.od-head + .od-line { border-top: 0; }
+/* Lamba naam "× 12 ✓ delivered" ko dabaye nahi, lipat jaaye */
+.od-top b, .od-sub > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.od-top > span:last-child, .od-sub > span:last-child { flex: 0 0 auto; text-align: right; }
+.od-why { margin-top: 4px; font-size: 13px; color: #92400e; }
+.dl-tag.hold, .tag.hold { background: #fffbeb; color: #92400e; }
+.hold-t { color: #92400e; }
+.hold-note { margin: 0 0 8px; font-size: 13.5px; color: #92400e; background: #fffbeb; border-radius: 10px; padding: 8px 10px; }
+.od-notes { display: grid; gap: 6px; margin-top: 6px; }
+.od-note { font-size: 13.5px; color: var(--ink-2); line-height: 1.4; overflow-wrap: anywhere; }
+.od-note.warn { color: #92400e; background: #fffbeb; border-radius: 8px; padding: 6px 8px; }
+.od-note a { font-weight: 600; white-space: nowrap; }
+/* Hold ki wajah — ek tap wale chips */
+.why-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.why-chips .chip {
+  border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2);
+  border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; min-height: 36px;
+}
+
+/* "You" ke upar kaam ke bade buttons (Expense / Team) — nav se hatke yahan */
+.card.quick { display: grid; gap: 10px; }
+.card.quick .btn.wide { margin-top: 0; min-height: 48px; font-size: 15px; }
+
+/* find-customer modal / order detail: chhote utility (CSP: inline style nahi) */
+.modal .said.inl { display: inline; margin: 0; }
+.modal .btn.mt-s { margin-top: 8px; }
+
+/* Delivery row: gol 🧭 — ⋯ jaisa hi */
+.acts.compact .btn.navb {
+  flex: 0 0 42px; width: 42px; padding: 0; border-radius: 50%;
+  font-size: 18px; line-height: 1; display: grid; place-items: center;
+}
+/* Route patti: Find + Open route ek saath, chhote screen par wrap */
+.routebar .rb-acts { display: flex; gap: 6px; flex: none; }
+.routebar { flex-wrap: wrap; }
+/* Location modal: GPS ki live accuracy, aur "link paste karo" ka raasta */
+.modal .loc-status { font-size: 13px; color: var(--ink-2); margin: -6px 0 10px; }
+.modal .loc-alt { margin-top: 10px; font-size: 13px; }
+.modal .loc-tip { font-size: 12.5px; margin: 0 0 10px; }
+
+/* empty-state ke neeche ek button (jaise: pehle apna password rakho) */
+.empty .empty-cta { margin-top: 12px; }
+
+/* Solo: ग्राहक जोड़ें */
+.so-cfab { position: fixed; right: max(16px, calc(50% - 284px)); bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 20;
+  width: 56px; height: 56px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--brand-strong); color: #fff; font-size: 30px; font-weight: 400; line-height: 1;
+  box-shadow: 0 10px 24px -8px rgba(31, 90, 240, .75); transition: transform .12s; }
+.so-cfab:active { transform: scale(.94); }
+.so-cfab:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+.so-pick { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; margin: 12px 0 2px; padding: 12px 14px;
+  border: 1.5px dashed var(--brand); border-radius: 14px; background: var(--brand-soft); color: var(--brand-ink); text-align: left; cursor: pointer; }
+.so-pick b { font-size: 15px; }
+.so-pick small { color: var(--ink-2); font-size: 12.5px; }
+.so-addrows { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; max-height: 46vh; overflow-y: auto; padding: 2px 2px 4px; }
+.so-addrow { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 12px 34px 12px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.so-addtwo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.so-addrow input { min-width: 0; margin: 0; }
+.so-addx { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--ink-3); font-size: 18px; line-height: 1; cursor: pointer; }
+.so-addmore { display: block; width: 100%; margin-top: 8px; padding: 8px; border: 0; background: none; color: var(--brand-ink); font: inherit; font-weight: 700; cursor: pointer; }
+@media (max-width: 380px) { .so-addtwo { grid-template-columns: minmax(0, 1fr); } }
+
+/* Test alerts popup: phone setting ke steps */
+ol.steps { padding-left: 20px; margin: 8px 0 0; }
+ol.steps li { margin: 6px 0; line-height: 1.45; }

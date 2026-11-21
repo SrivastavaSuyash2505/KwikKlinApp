@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Set your password — KwikKlin</title>
+<link rel="stylesheet" href="/admin/static/tokens.css">
+<link rel="stylesheet" href="/admin/static/kk-ds.css">
+<style>
+  * { box-sizing:border-box; margin:0; }
+  body { min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:16px;
+         background:var(--navy-deep); color:var(--ink);
+         font:15px/1.5 var(--font, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif); }
+  .card { width:100%; max-width:400px; padding:28px 24px; background:var(--surface); border-radius:18px;
+          box-shadow:0 24px 60px -24px rgba(0,0,0,.6); }
+  .logo { display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .logo-badge { width:38px; height:38px; display:grid; place-items:center; border-radius:11px;
+                background:var(--brand-strong); color:#fff; font-weight:800; font-size:14px; }
+  .logo b { font-size:16px; font-weight:800; }
+  h1 { font-size:21px; font-weight:800; letter-spacing:-.01em; line-height:1.25; margin-bottom:6px; }
+  p  { color:var(--ink-2); font-size:14px; margin-bottom:8px; }
+  label { display:block; font-size:13px; font-weight:600; color:var(--ink-2); margin:16px 0 6px; }
+  input { width:100%; min-height:48px; padding:11px 14px; font:inherit; font-size:16px; color:var(--ink);
+          background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+  input:focus { outline:2px solid var(--brand); outline-offset:1px; border-color:var(--brand); }
+  .go { width:100%; min-height:50px; margin-top:22px; padding:12px; border:none; border-radius:12px; cursor:pointer;
+        background:var(--brand-strong); color:var(--on-brand); font:inherit; font-weight:700; font-size:16px; }
+  .go:hover:not(:disabled) { background:#1a4bd6; }
+  .go:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  .go:disabled { opacity:.6; cursor:wait; }
+  .err { color:var(--bad, #be123c); font-size:13.5px; margin-top:10px; min-height:20px; }
+
+/* password field: show/hide (login, signup, set-password) */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { padding-right: 92px; }
+.pw-wrap .eye {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  min-height: 36px; padding: 4px 10px; border: 0; border-radius: 8px; background: none; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 700; color: var(--brand-ink);
+}
+.pw-wrap .eye:hover { background: var(--brand-soft); }
+.pw-wrap .eye:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><div class="logo-badge">KK</div><b>Kwik Klin</b></div>
+  <h1>Apna password set karein</h1>
+  <p>Aapka account taiyar hai. Kam se kam 8 characters ka password rakhein. Ye sirf aapko pata rahega.</p>
+  <label for="pw">Naya password</label>
+  <input id="pw" type="password" autocomplete="new-password" autofocus>
+  <label for="pw2">Dobara likhein</label>
+  <input id="pw2" type="password" autocomplete="new-password">
+  <button id="go" class="go">Password set karein</button>
+  <div class="err" id="err"></div>
+</div>
+<script>
+const token = location.pathname.split("/").pop();
+document.getElementById("go").onclick = async () => {
+  const pw = document.getElementById("pw").value;
+  const pw2 = document.getElementById("pw2").value;
+  const err = document.getElementById("err");
+  err.textContent = "";
+  if (pw.length < 8) { err.textContent = "Password kam se kam 8 characters ka ho"; return; }
+  if (pw !== pw2)    { err.textContent = "Dono passwords same nahi hain"; return; }
+  const btn = document.getElementById("go");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/invite/accept", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ token, password: pw }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || "kuch galat hua");
+    location.href = d.next_url || "/welcome";
+  } catch (e) {
+    err.textContent = e.message;
+    btn.disabled = false;
+  }
+};
+
+document.getElementById("pw2").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("go").click();
+});
+
+/* Har password field par show/hide eye — user apna typed password dekh
+   sake (galat password ki sabse aam wajah yahi hoti hai). */
+(function attachEyes() {
+  var SHOW = "Dikhayein", HIDE = "Chhupayein";
+  document.querySelectorAll('input[type="password"]').forEach(function (inp) {
+    if (inp.closest(".pw-wrap")) return;
+    var wrap = document.createElement("div");
+    wrap.className = "pw-wrap";
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "eye";
+    b.textContent = SHOW;
+    b.setAttribute("aria-label", "Show password");
+    b.addEventListener("click", function () {
+      var show = inp.type === "password";
+      inp.type = show ? "text" : "password";
+      b.textContent = show ? HIDE : SHOW;
+      b.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      inp.focus();
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

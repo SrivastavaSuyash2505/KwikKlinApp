@@ -1,0 +1,413 @@
+/* Kwik Klin staff — UI v2 visual layer.
+ *
+ * staff.css keeps its principles and all behaviour: system font (no
+ * webfont on 3G), colour = status, one bold button per job. This layer
+ * makes it feel like a modern app: a calm header, today's numbers as
+ * tiles, each job as a card with its status spine, an icon tab bar with
+ * a raised New button. Remove the <link> and the register look returns.
+ */
+
+:root {
+  --paper: var(--bg);
+  --rule: #e4e7ec;
+  --rule-2: #eef0f4;
+  --card-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 1px 1px rgba(15, 23, 42, .03);
+  --gutter: clamp(12px, 3.6vw, 20px);
+}
+
+body { background: var(--paper); letter-spacing: -.003em; }
+.ic { width: 22px; height: 22px; display: block; }
+
+/* ─── header ─────────────────────────────────────────────────────────── */
+.top {
+  background: var(--plate-grad);
+  padding: calc(10px + env(safe-area-inset-top)) var(--gutter) 12px;
+}
+.top .who { display: flex; flex-direction: column; min-width: 0; }
+.top .who b { font-size: 16px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .who span { font-size: 12px; color: rgba(255, 255, 255, .62); margin-top: 1px; }
+.iconbtn {
+  width: 42px; height: 42px; display: grid; place-items: center;
+  border-radius: 12px; background: rgba(255, 255, 255, .06);
+}
+.iconbtn .ic { width: 20px; height: 20px; }
+.iconbtn:active { background: rgba(255, 255, 255, .14); }
+.bell-n { top: 3px; right: 3px; box-shadow: 0 0 0 2px #0f1623; }
+
+/* ─── today: three tiles under the header ─────────────────────────────── */
+.today {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column;
+  gap: 8px; padding: 12px var(--gutter) 4px; background: transparent; border: 0;
+  font-size: 11.5px; color: var(--ink-3); font-weight: 500;
+}
+.today > div {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 10px 12px; box-shadow: var(--card-shadow); min-width: 0;
+}
+.today b { font-size: 21px; line-height: 1.15; margin-bottom: 1px; }
+
+/* ─── late alert ─────────────────────────────────────────────────────── */
+.latebar {
+  margin: 10px var(--gutter) 0; width: calc(100% - 2 * var(--gutter));
+  border-radius: 14px; border: 1px solid #fecdd3;
+}
+
+/* ─── chips stick under the header while the list scrolls ─────────────── */
+.chips {
+  position: sticky; top: calc(64px + env(safe-area-inset-top)); z-index: 6;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 10px var(--gutter);
+}
+.chips button {
+  border: 1px solid var(--rule); box-shadow: var(--card-shadow);
+  min-height: 36px; padding: 6px 14px; font-size: 13.5px;
+}
+.chips button.on { box-shadow: none; }
+.searchrow { padding: 0 var(--gutter) 10px; }
+
+/* ─── jobs: one card each, status spine on the left ───────────────────── */
+.list { padding: 2px var(--gutter) 16px; }
+.reg { background: transparent; border: 0; display: flex; flex-direction: column; gap: 10px; }
+.row {
+  position: relative; overflow: hidden;
+  grid-template-columns: 4px 52px 1fr; gap: 0 12px;
+  padding: 13px 14px 13px 0;
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 16px;
+  box-shadow: var(--card-shadow);
+}
+.row:last-child { border-bottom: 1px solid var(--rule); }
+.spine { border-radius: 0; }
+.when { text-align: left; }
+.when b { font-size: 13.5px; }
+.when span { font-size: 11px; }
+.line1 b { font-size: 15.5px; font-weight: 650; }
+.line1 .amt { font-size: 14.5px; }
+.sub { font-size: 13px; margin-top: 4px; }
+.tag { border-radius: 6px; padding: 2px 7px; font-weight: 650; }
+.acts { margin-top: 12px; gap: 8px; }
+/* Card ke button halke: kaam ka button ek line mein, baaki barabar neeche */
+.acts .btn.sm { flex: 1 1 0; min-width: 0; min-height: 38px; border-radius: 10px; padding: 6px 8px; font-size: 13px; white-space: nowrap; }
+.acts .btn.sm.go { order: -1; flex: 1 1 100%; background: var(--surface); color: var(--brand-ink); border: 1.5px solid var(--brand-strong); box-shadow: none; }
+.acts .btn.sm.money { flex: 1.7 1 0; background: var(--surface); color: var(--warning); border: 1.5px solid var(--warning); box-shadow: none; }
+.acts.compact .btn.sm.go { flex: 1 1 auto; }
+.acts.compact .btn.sm[data-do="pickup_bill"] { flex: none; padding: 6px 12px; }
+.row.tappable:active { background: var(--sheet); transform: scale(.995); }
+
+/* ─── buttons ────────────────────────────────────────────────────────── */
+.btn { border-radius: 12px; font-weight: 650; }
+.btn.go { background: linear-gradient(145deg, #2f6bff, var(--brand-strong)); box-shadow: 0 6px 14px -6px rgba(31, 90, 240, .7); }
+.btn.ghost { border: 1px solid var(--rule); box-shadow: var(--card-shadow); }
+
+/* ─── cards / sheets ─────────────────────────────────────────────────── */
+.card { border-radius: 16px; box-shadow: var(--card-shadow); margin: 12px var(--gutter); }
+input, select, textarea { border: 1px solid var(--rule); border-radius: 12px; }
+
+/* ─── bottom tab bar ─────────────────────────────────────────────────── */
+.app { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+.bottom {
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: saturate(1.6) blur(16px); -webkit-backdrop-filter: saturate(1.6) blur(16px);
+  border-top: 1px solid var(--rule); box-shadow: 0 -8px 24px -14px rgba(15, 23, 42, .25);
+  padding: 4px 4px env(safe-area-inset-bottom);
+  align-items: flex-end;
+}
+.bottom button { min-height: 58px; gap: 4px; font-size: 11px; color: #64748b; }
+.bottom button i { display: grid; place-items: center; height: 26px; }
+.bottom button i .ic { width: 23px; height: 23px; }
+.bottom button.on { color: var(--brand-strong); }
+.bottom button.fab i {
+  width: 50px; height: 50px; margin-top: -22px; border-radius: 17px;
+  background: linear-gradient(145deg, #4d86ff, var(--brand-strong)); color: #fff;
+  box-shadow: 0 10px 22px -6px rgba(47, 107, 255, .65), 0 0 0 5px #fff;
+}
+.bottom button.fab i .ic { width: 25px; height: 25px; stroke-width: 2.4; }
+.bottom button.fab { color: var(--ink); }
+.paybar { bottom: calc(86px + env(safe-area-inset-bottom)); border-radius: 18px; }
+
+/* ─── login ──────────────────────────────────────────────────────────── */
+.login, .boot { background: radial-gradient(120% 80% at 50% 0%, var(--navy) 0%, var(--navy-deep) 70%); }
+.login .sheet { border-radius: 22px; padding: 28px 22px 24px; box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .5); }
+.login h1 { font-size: 1.35rem; font-weight: 700; }
+.mark i { border-radius: 12px; background: linear-gradient(145deg, #4d86ff, var(--brand-strong)); }
+
+/* ─── wide screens: a centred phone-width column ──────────────────────── */
+@media (min-width: 700px) {
+  .today, .chips, .searchrow, .list, #installbar, #pwbanner { max-width: 780px; margin-inline: auto; }
+  .latebar { max-width: calc(780px - 2 * var(--gutter)); margin-inline: auto; display: flex; }
+  .bottom { position: fixed; left: 50%; right: auto; transform: translateX(-50%); width: min(520px, 92vw);
+            bottom: 14px; border: 1px solid var(--rule); border-radius: 20px; max-width: none; margin: 0; }
+  .app { padding-bottom: 110px; }
+}
+
+/* screens that render cards inside the list (new bill, expense, you):
+   the list already supplies the side gutter */
+.list .card { margin-inline: 0; }
+
+/* ═══ New bill — built for one hand on a 5.5" phone ═══════════════════ */
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.billsteps {
+  display: flex; gap: 6px; margin: 4px 0 12px; overflow-x: auto; scrollbar-width: none;
+}
+.billsteps::-webkit-scrollbar { display: none; }
+.billsteps span {
+  flex: 1 0 auto; text-align: center; font-size: 12px; font-weight: 650; color: var(--ink-3);
+  padding: 7px 10px; border-radius: 999px; background: #e9edf3; white-space: nowrap;
+}
+.billsteps span.on { background: var(--ink); color: #fff; }
+
+.pickup-banner {
+  display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px;
+  padding: 12px 14px; border-radius: 16px; color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  box-shadow: 0 10px 22px -12px rgba(79, 70, 229, .8);
+}
+.pickup-banner b { font-size: 15px; }
+.pickup-banner span { font-size: 12.5px; opacity: .9; }
+
+.card h3 { display: flex; align-items: center; gap: 9px; font-size: 16px; }
+.stepn {
+  font-style: normal; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px;
+  background: var(--brand-soft, #eef4ff); color: var(--brand-strong); font-size: 13px; font-weight: 700;
+}
+
+/* service: one tap, swipe for more */
+.svcchips {
+  display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
+  margin: 2px -15px 10px; padding: 2px 15px 4px;
+}
+.svcchips::-webkit-scrollbar { display: none; }
+.svcchips button {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 42px; padding: 8px 15px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2);
+  font: inherit; font-size: 14.5px; font-weight: 650; white-space: nowrap;
+}
+.svcchips button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.svcchips button i {
+  font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 11.5px; background: var(--brand); color: #fff;
+}
+
+/* item list: bigger rows, inline − n + once in the cart */
+.item-list { border-radius: 14px; max-height: 52vh; }
+.item-row { min-height: 54px; padding: 8px 10px 8px 14px; }
+.ir-name { font-size: 15.5px; }
+.ir-price { font-size: 14px; }
+.ir-add { min-width: 38px; height: 34px; border-radius: 12px; font-size: 18px; }
+.ir-step {
+  display: inline-flex; align-items: center; flex: 0 0 auto;
+  border-radius: 12px; background: var(--brand); color: #fff; overflow: hidden; height: 36px;
+}
+.ir-step > span { display: grid; place-items: center; width: 36px; height: 36px; font-size: 19px; font-weight: 700; }
+.ir-step .ir-minus { background: rgba(0, 0, 0, .14); }
+.ir-step b { min-width: 26px; text-align: center; font-size: 15px; }
+.item-row.in { background: #eef4ff; }
+
+/* payment: quick "Nothing" / "Full ₹X" next to the amount */
+.advrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.advrow .btn.sm { min-height: 46px; white-space: nowrap; }
+.pick { gap: 8px; }
+.pickbtn { border-radius: 12px; min-height: 46px; }
+
+/* the total bar: one glance, one thumb */
+.paybar { padding: 10px 10px 10px 16px; gap: 10px; }
+.paybar-sum b { font-size: 22px; }
+.paybar .btn.go { min-height: 50px; padding: 0 18px; font-size: 15.5px; border-radius: 14px; }
+
+/* 5.5" Android (~360px wide): no wasted gutter, nothing wraps awkwardly */
+@media (max-width: 380px) {
+  :root { --gutter: 10px; }
+  .card { padding: 13px; }
+  .svcchips { margin-inline: -13px; padding-inline: 13px; }
+  .svcchips button { padding: 8px 12px; font-size: 14px; }
+  .advrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .advrow [data-advq="0"] { display: none; }
+  .paybar .btn.go { padding: 0 14px; font-size: 14.5px; }
+  .billsteps span { font-size: 11.5px; padding: 6px 8px; }
+  .today b { font-size: 19px; }
+  .row { grid-template-columns: 4px 46px 1fr; gap: 0 9px; }
+}
+
+/* today: tap karne wale tile (cash) — wahi dabba, button ki tarah */
+.today > button.tap {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 10px 12px; box-shadow: var(--card-shadow); min-width: 0;
+  font: inherit; font-size: 11.5px; color: var(--ink-3); font-weight: 500; text-align: left; cursor: pointer;
+}
+.today > button.tap b { display: block; }
+.today > button.alert { border-color: var(--late); }
+.today > button.alert b { color: var(--late); }
+/* 320–380px par manager ke paanch tile: "collected" kat jaata tha */
+@media (max-width: 380px) {
+  .today { gap: 6px; font-size: 10.5px; }
+  .today > div, .today > button.tap { padding: 9px 7px; font-size: 10.5px; overflow-wrap: anywhere; }
+  .today b { font-size: 17px; }
+}
+details.od-block > summary { cursor: pointer; list-style: none; }
+details.od-block > summary::-webkit-details-marker { display: none; }
+/* bina signal ke ruke kaam — late wali patti jaisi, par neeli */
+.latebar.outbar { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+/* notification ki ek baar ki yaad */
+.routebar.pushbar { margin: 10px var(--gutter) 0; flex-wrap: wrap; }
+.pushbar-acts { display: flex; gap: 6px; margin-left: auto; }
+
+/* Urgent work escalation — intentionally uses existing Kwik Klin tokens. */
+.urgent-alert {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 10px var(--gutter, 14px) 12px;
+  padding: 12px;
+  border: 2px solid #ff4d4f;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #421719, #251a20);
+  box-shadow: 0 8px 24px rgba(255, 65, 65, .18);
+}
+.urgent-alert[hidden] { display: none !important; }
+.urgent-alert-mark {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  border-radius: 11px; background: #ff4d4f; color: #fff;
+  font-size: 24px; font-weight: 900;
+}
+.urgent-alert-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.urgent-alert-copy strong { color: #ffb6b6; font-size: 13px; letter-spacing: .02em; }
+.urgent-alert-copy span { font-size: 14px; font-weight: 750; overflow-wrap: anywhere; }
+.urgent-alert-copy small { font-size: 12px; color: #f1d6d6; overflow-wrap: anywhere; }
+.urgent-alert-actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+.urgent-alert-open { flex: 1; min-height: 42px; border: 0; border-radius: 10px; background: #ff4d4f; color: #fff; font-weight: 800; }
+.urgent-alert-dismiss { width: 42px; min-width: 42px; height: 42px; border: 1px solid #b96b70; border-radius: 10px; color: #fff; background: transparent; font-size: 25px; }
+@media (min-width: 700px) {
+  .urgent-alert { max-width: 752px; margin-inline: auto; grid-template-columns: 38px minmax(0, 1fr) auto; }
+  .urgent-alert-actions { grid-column: auto; }
+  .urgent-alert-open { min-width: 120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .urgent-alert { scroll-behavior: auto; }
+}
+
+/* ─── New Bill (kk-bill.css) — staff app ki jagah ────────────────────── */
+#list > .kb { padding: 12px clamp(12px, 3.5vw, 22px) 18px; --kb-bar-bottom: calc(102px + env(safe-area-inset-bottom)); }
+#list > .kb .pickup-banner { margin: 0 0 12px; }
+@media (min-width: 820px) {
+  .app.kb-wide { max-width: 1240px; }
+  .app.kb-wide .bottom { max-width: 780px; }
+  #list > .kb { --kb-bar-bottom: 14px; }
+}
+
+/* New Bill → Pickup: apne khule pickup task (staff.js paintPickups) */
+#list > .kb .kb-pickups { margin-top: 8px; }
+#list > .kb .kb-pick-list { display: grid; gap: 6px; margin-top: 8px; }
+#list > .kb .kb-pick-list .kb-btn { justify-content: flex-start; text-align: left; }
+#list > .kb .kb-pick-list .kb-btn.on { border-color: var(--brand); background: var(--brand-soft); }
+
+/* ─── Solo owner mode (solo.js) ─────────────────────────────────────── */
+.so-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.so-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; border-radius: 14px; border: 1px solid var(--line, #e5e7eb); background: var(--card, #fff); text-align: left; font: inherit; color: inherit; }
+.so-tile b { font-size: 24px; line-height: 1.1; }
+.so-tile span { font-size: 13px; font-weight: 600; }
+.so-tile small { font-size: 11.5px; color: var(--muted, #6b7280); }
+.so-big { font-size: 18px; padding: 14px; margin: 4px 0 12px; }
+.so-h { margin: 14px 0 6px; font-size: 14px; color: var(--muted, #6b7280); font-weight: 700; }
+.so-empty { color: var(--muted, #6b7280); font-size: 13.5px; margin: 4px 0 10px; }
+.so-card { border: 1px solid var(--line, #e5e7eb); border-left: 4px solid #cbd5e1; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; background: var(--card, #fff); }
+.so-card.late { border-left-color: #dc2626; }
+.so-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 15px; }
+.so-due { font-weight: 800; color: #b91c1c; white-space: nowrap; }
+.so-due.ok { color: #15803d; }
+.so-sub { font-size: 12.5px; color: var(--muted, #6b7280); margin-top: 3px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.so-when.late { color: #dc2626; font-weight: 700; }
+.so-acts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.so-acts .btn.go { flex: 1; min-width: 120px; }
+.so-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; border-radius: 14px; background: #fef2f2; color: #991b1b; margin: 10px 0; }
+.so-total b { font-size: 24px; }
+.so-hint { margin: 8px 0; }
+.so-svc h3 { margin: 0 0 6px; }
+.so-rate { display: grid; grid-template-columns: 1fr 96px 64px; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line, #eef0f3); }
+.so-rate.off .so-rn { color: var(--muted, #6b7280); text-decoration: line-through; }
+.so-rn small { color: var(--muted, #6b7280); }
+.so-ri { display: flex; align-items: center; gap: 4px; }
+.so-ri input { width: 100%; margin: 0; }
+.so-tog { font: inherit; font-size: 12px; font-weight: 700; padding: 6px 0; border-radius: 999px; border: 1px solid var(--line, #e5e7eb); background: #f3f4f6; color: #6b7280; }
+.so-tog.on { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.so-ok { color: #15803d; font-weight: 600; }
+.so-use { margin: 10px 0; }
+.so-use-l { display: flex; justify-content: space-between; font-size: 13px; }
+.so-bar { height: 8px; border-radius: 999px; background: #e5e7eb; overflow: hidden; margin-top: 4px; }
+.so-bar i { display: block; height: 100%; background: var(--brand, #1f5af0); }
+.so-bar i.hot { background: #dc2626; }
+.so-ul { margin: 6px 0 0 18px; padding: 0; font-size: 13.5px; }
+.so-checks label { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line, #eef0f3); font-size: 15px; }
+.so-checks small { color: var(--muted, #6b7280); margin-left: auto; font-size: 11.5px; text-align: right; }
+.so-checks input { width: 20px; height: 20px; margin: 0; }
+/* Solo home: 5 kaam (solo.js) — tile par icon, naam, taaza ank */
+.so-act { min-height: 96px; }
+.so-act i { font-style: normal; font-size: 20px; line-height: 1; }
+.so-act span { color: var(--muted, #6b7280); font-size: 12.5px; }
+.so-act b { font-size: 22px; }
+.so-tiles3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Owner app: kisi bhi do tareekh ka hisaab (solo.js rangeCard) */
+.so-range h3 { margin: 0 0 8px; }
+.so-range-row { display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; align-items: center; margin-bottom: 10px; }
+.so-range-row input { width: 100%; min-width: 0; }
+.so-tiles3 .so-tile b { font-size: 17px; overflow-wrap: anywhere; }
+.so-plan { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+/* Recharge: do-column tiles, AI aur WhatsApp alag (solo.js packGrid) */
+.so-pack-h { margin: 14px 0 8px; font-size: 13px; font-weight: 700; color: var(--ink-3, #6b7280); }
+.so-rc h3 + .so-pack-h { margin-top: 6px; }
+.so-packs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 4px; }
+.so-pack { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-width: 0; min-height: 78px; padding: 10px 12px; border: 1px solid var(--line, #e5e7eb); border-radius: 14px; background: var(--card, #fff); color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.so-pack:active, .so-pack:focus-visible { border-color: var(--brand, #2f6bff); background: #eef4ff; }
+.so-pack-n { font-size: 20px; font-weight: 800; line-height: 1.15; color: var(--ink, #111827); font-variant-numeric: tabular-nums; }
+.so-pack-k { font-size: 12px; color: var(--ink-3, #6b7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.so-pack-p { margin-top: auto; padding-top: 4px; font-weight: 800; color: #1f5af0; font-variant-numeric: tabular-nums; }
+.so-offer { position: relative; padding: 14px; margin: 10px 0; }
+.so-offer-box { padding: 10px 12px; border-radius: 12px; background: #eef4ff; margin-bottom: 8px; }
+.so-offer-box h4 { margin: 0 0 4px; font-size: 14.5px; padding-right: 24px; }
+.so-offer-box .hint { margin: 2px 0 0; font-size: 12.5px; color: var(--muted, #6b7280); }
+.so-offer-up { background: #eef2ff; }
+.so-offer-first { margin: 0; font-size: 14px; }
+.so-offer-first b { font-size: 20px; }
+.so-offer-first small { display: block; font-size: 12px; color: var(--muted, #6b7280); }
+.so-x { position: absolute; top: 8px; right: 8px; z-index: 1; width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(15, 23, 42, .07); color: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.modal-ov.so-pop .modal { position: relative; }
+.so-plan .so-top small { color: var(--muted, #6b7280); font-size: 12px; }
+.so-state { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #ecfdf5; color: #047857; }
+.so-state.warm { background: #fffbeb; color: #b45309; }
+.so-state.hot { background: #fef2f2; color: #b91c1c; }
+.so-bar i.warm { background: #d97706; }
+.so-alert { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: #fef2f2; color: #991b1b; font-size: 13.5px; line-height: 1.4; }
+.so-cust { display: block; width: 100%; text-align: left; font: inherit; color: inherit; }
+.so-line { display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line, #e5e7eb); background: none; font: inherit; color: inherit; text-align: left; }
+.so-line small { display: block; color: var(--muted, #6b7280); font-size: 12px; }
+.so-line > span:last-child { text-align: right; white-space: nowrap; }
+.so-day { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: 12.5px; margin: 4px 0; }
+.so-day i { display: block; height: 8px; border-radius: 999px; background: var(--brand, #2f6bff); min-width: 2px; }
+@media (max-width: 360px) { .so-tiles3 { grid-template-columns: 1fr 1fr; } }
+/* Solo plan khatam / khatam hone wala (solo.js lapseBanner) aur khud kharidna (buyCard) */
+.so-lapse p, .so-warn p { margin: 0 0 8px; }
+.so-warn { background: #fffbeb; color: #92400e; }
+.so-sends { display: flex; flex-direction: column; gap: 2px; width: 100%; border: 0; text-align: left; font: inherit; cursor: pointer; }
+.so-msg { white-space: pre-wrap; max-height: 9em; overflow: auto; }
+/* Plan aur mahina/saal: barabar ke do-column khane, phone par bhi ek seedh mein */
+.so-buy .so-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.so-buy .so-chips button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; min-height: 52px; padding: 6px 8px; border-radius: 12px; border: 1px solid var(--line, #e5e7eb); background: var(--card, #fff); font: inherit; font-size: 13.5px; color: inherit; line-height: 1.25; text-align: center; }
+.so-buy .so-chips button b { font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.so-buy .so-chips button small { font-size: 12px; font-weight: 500; color: var(--ink-3, #6b7280); }
+.so-buy .so-chips button.on { border-color: var(--brand, #2f6bff); background: #eef4ff; color: #1a45c4; box-shadow: inset 0 0 0 1px var(--brand, #2f6bff); }
+.so-buy .so-chips button.on small { color: #1a45c4; }
+.so-total-row { border-top: 1px dashed var(--line, #e5e7eb); margin-top: 4px; padding-top: 8px; font-size: 16px; }
+/* Solo: apna WhatsApp jodne ka code / QR (solo.js waCard) */
+.so-code { font-size: 28px; font-weight: 800; letter-spacing: 4px; text-align: center; margin: 8px 0; font-family: ui-monospace, monospace; }
+.so-qr { display: block; width: 100%; max-width: 280px; margin: 10px auto; border-radius: 12px; }
+
+/* 320px: 5 khaanon mein rakam aur label beech se nahi tootte (₹60/0, collect/ed) */
+@media (max-width: 380px) {
+  .today { gap: 4px; }
+  .today > div, .today > button.tap { min-width: 0; padding-inline: 6px; }
+  .today b { font-size: 16px; white-space: nowrap; }
+  .today small, .today span { overflow-wrap: normal; word-break: normal; font-size: 10px; }
+}

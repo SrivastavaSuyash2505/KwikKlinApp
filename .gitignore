@@ -1,0 +1,42 @@
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Inbox media files (chat photos)
+app/media/
+
+# friend/dev copies of env
+.env.friend
+
+# Database backups (nightly pg_dump output)
+backups/
+*.dump
+*.log
+app/static/dist/
+dist/
+.kk-owner
+
+# Local artefacts
+*.patch
+*.docx
+.claude/

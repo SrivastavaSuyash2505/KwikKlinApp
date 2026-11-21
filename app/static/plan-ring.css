@@ -1,0 +1,23 @@
+/* Plan ka gol ring (plan-ring.js). Rang bache din batate hain. */
+.kkpr { --kkpr: var(--success); position: relative; display: flex; align-items: center; gap: 14px; min-height: 96px; }
+.kkpr.warm { --kkpr: var(--warning); }
+.kkpr.hot { --kkpr: var(--error); }
+.kkpr-ring { flex: 0 0 auto; width: 96px; height: 96px; transform: rotate(-90deg); }
+.kkpr-ring circle { fill: none; stroke: var(--border-soft); stroke-width: 9; }
+.kkpr-ring circle.on { stroke: var(--kkpr); stroke-linecap: round; transition: stroke-dasharray .6s ease, stroke .3s; }
+.kkpr-mid {
+  position: absolute; left: 0; top: 50%; width: 96px; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; text-align: center; pointer-events: none;
+}
+.kkpr-mid b { font-size: 26px; line-height: 1; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.kkpr-mid small { margin-top: 2px; max-width: 72px; font-size: 10.5px; line-height: 1.15; color: var(--ink-3); }
+.kkpr-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.kkpr-name { font-size: 16px; font-weight: 750; color: var(--ink); overflow-wrap: anywhere; }
+.kkpr-name em {
+  margin-left: 4px; padding: 1px 7px; border-radius: 99px; font-style: normal; font-size: 11px; font-weight: 700;
+  color: var(--info); background: var(--info-soft);
+}
+.kkpr-text span { font-size: 13.5px; color: var(--ink-2); }
+.kkpr-text small { font-size: 12px; color: var(--ink-3); }
+.so-plan .kkpr { margin-bottom: 10px; }
+@media (prefers-reduced-motion: reduce) { .kkpr-ring circle.on { transition: none; } }

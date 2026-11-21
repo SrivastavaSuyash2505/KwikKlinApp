@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start your free trial — Kwik Klin laundry software</title>
+<meta name="description" content="Laundry software that runs on WhatsApp: bills, order status, dues and an AI that answers your customers. Solo plans from {{PLAN_FROM}} a month, free trial.">
+<meta name="theme-color" content="#1e2a5a">
+<link rel="icon" href="/site/assets/img/logo-180.png" type="image/png">
+<link rel="apple-touch-icon" href="/site/assets/img/logo-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Website jaisa hi design: wahi site.css, wahi font, wahi logo (routers: main.py join_page) -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="/site/assets/css/site.css?v={{ASSET_V}}">
+<style>
+  /* Sirf is page ka — baaki sab site.css se (card, button, field, header) */
+  body { background:var(--bg-2); }
+  .j-hero { padding:40px 0 8px; }
+  @media (min-width:900px) { .j-hero { padding:64px 0 12px; } }
+  .j-hero h1 { font-size:clamp(28px, 6vw, 46px); margin:12px 0; }
+  .j-hero .lead { margin:0 auto; }
+  .j-points { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:20px; }
+  .j-points span { font-size:13px; font-weight:600; padding:7px 13px; border-radius:999px; background:#fff; border:1px solid var(--line); color:var(--ink-2); }
+  .j-plans { padding-top:28px; }
+  .cycle { display:flex; justify-content:center; margin:0 auto 34px; }
+  .cycle div { display:inline-flex; background:#fff; border:1px solid var(--line); border-radius:14px; padding:4px; gap:4px; }
+  .cycle button { min-height:44px; padding:0 18px; border:0; border-radius:10px; background:transparent; font:inherit; font-weight:700; font-size:14px; color:var(--ink-2); cursor:pointer; }
+  .cycle button.on { background:var(--brand); color:#fff; }
+  .plan .save { min-height:20px; font-size:13px; font-weight:700; color:var(--ok); margin-top:2px; }
+  .plan.picked { border:2px solid var(--cyan); box-shadow:0 0 0 4px rgba(0,180,216,.14); }
+  .j-panes { padding:8px 0 64px; }
+  .j-card { background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); padding:26px 20px; max-width:560px; margin:0 auto; scroll-margin-top:calc(var(--hdr) + 16px); }
+  @media (min-width:600px) { .j-card { padding:34px 32px; } }
+  .j-card h2 { font-size:clamp(22px, 4vw, 28px); margin:0 0 4px; }
+  .j-card .sub { color:var(--ink-3); font-size:14.5px; }
+  .j-chosen { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:18px 0 4px; padding:12px 14px; border-radius:14px; background:var(--brand-soft); color:var(--brand-strong); font-weight:700; font-size:14.5px; }
+  .j-chosen small { display:block; font-weight:600; color:var(--ink-3); font-size:12.5px; }
+  .j-chosen a { color:var(--brand); font-size:13.5px; white-space:nowrap; padding:10px 4px; }
+  .j-row { display:grid; grid-template-columns:1fr; gap:0 14px; }
+  @media (min-width:600px) { .j-row { grid-template-columns:1fr 1fr; } }
+  .msg { border-radius:12px; padding:12px 14px; font-size:14px; margin-top:16px; display:none; }
+  .msg.err { background:#fef0f0; color:#b42318; display:block; }
+  .msg.ok { background:#ecfdf3; color:#046c4e; display:block; }
+  .switch { text-align:center; font-size:14px; color:var(--ink-3); margin-top:16px; }
+  .switch a { color:var(--brand); font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; padding:12px 8px; margin:-6px 0; }
+  .gbtn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; min-height:50px; border:1.5px solid var(--line); background:#fff;
+          border-radius:14px; font:inherit; font-weight:700; font-size:15px; cursor:pointer; color:#3c4043; margin-top:18px; }
+  .gbtn:hover { border-color:var(--brand); }
+  .gbtn svg { width:18px; height:18px; }
+  .or { display:flex; align-items:center; gap:10px; color:var(--ink-3); font-size:12.5px; margin:16px 0 0; }
+  .or:before, .or:after { content:""; flex:1; height:1px; background:var(--line); }
+  .gnote { background:var(--cyan-soft); border:1px solid #bde9f3; border-radius:12px; padding:11px 13px; font-size:14px; color:var(--cyan-ink); margin-top:16px; }
+  .j-go { margin-top:22px; }
+  .j-hdr-actions { display:flex; gap:8px; margin-left:auto; }
+  .j-hdr-actions .btn { min-height:44px; padding:0 16px; font-size:14.5px; }
+  @media (max-width:420px) { .j-hdr-actions .btn { padding:0 12px; font-size:14px; } .logo small { display:none; } }
+  .j-foot { padding:32px 0 28px; }
+  .j-foot .copy { margin-top:0; border-top:0; padding-top:0; }
+  /* password field: show/hide eye (login, signup) */
+  .pw-wrap { position:relative; display:block; }
+  .pw-wrap input { padding-right:48px; }
+  .pw-wrap .eye { position:absolute; right:6px; top:50%; transform:translateY(-50%); width:40px; height:40px; background:none; border:none; cursor:pointer; font-size:16px; line-height:1; border-radius:10px; }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wrap nav">
+    <a class="logo" href="/" aria-label="Kwik Klin home">
+      <img src="/site/assets/img/logo-96.png" alt="" width="44" height="44">
+      <span>Kwik Klin<small>Laundry software</small></span>
+    </a>
+    <div class="j-hdr-actions">
+      <button class="btn btn-ghost" type="button" onclick="show('login')">Log in</button>
+      <button class="btn btn-primary" type="button" onclick="show('signup')">Start free trial</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="j-hero"><div class="wrap head center">
+  <span class="eyebrow">For laundry owners · Any city</span>
+  <h1>Your shop's <span class="hl">WhatsApp</span> runs itself</h1>
+  <p class="lead">Bills, order status, dues and an AI that answers your customers 24×7 — you just run the shop.</p>
+  <div class="j-points">
+    <span>Bill in 3 taps</span><span>Customer gets it on WhatsApp</span><span>Every due tracked</span><span>AI replies on its own</span>
+  </div>
+</div></section>
+
+<section class="j-plans" aria-labelledby="plans-h"><div class="wrap">
+  <h2 id="plans-h" class="sr">Plans</h2>
+  <div class="cycle"><div role="group" aria-label="Billing period">
+    <button id="cy-a" class="on" type="button" onclick="setCycle(true)">Yearly · 2 months free</button>
+    <button id="cy-m" type="button" onclick="setCycle(false)">Monthly</button>
+  </div></div>
+  <div id="plans"><p class="muted plan-note">Loading plans…</p></div>
+  <p class="muted plan-note" id="note"></p>
+</div></section>
+
+<section class="j-panes" aria-label="Sign up or log in"><div class="wrap">
+  <!-- signup -->
+  <div class="j-card" id="pane-signup" style="display:none">
+    <h2>Create your account</h2>
+    <p class="sub" id="s-sub">Free trial — no card needed. Pay only if you love it.</p>
+    <div class="j-chosen" id="s-chosen" hidden></div>
+    <div id="gsignup" style="display:none">
+      <button class="gbtn" type="button" onclick="googleGo(true)"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-3.9H24v7.1h12.1c-.2 1.8-1.6 4.6-4.5 6.4l6.9 5.3c4.1-3.8 6.6-9.3 6.6-14.9z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.3c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8.1 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.5 28.5c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 10z"/><path fill="#EA4335" d="M24 9.9c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.7 29.9 1.5 24 1.5 15.4 1.5 8.1 6.4 4.4 14l7.1 5.5C13.3 14.2 18.2 9.9 24 9.9z"/></svg>Sign up with Google</button>
+      <div class="or">or</div>
+    </div>
+    <div class="gnote" id="gnote" style="display:none"></div>
+    <div class="field"><label for="s-shop">Shop name *</label><input id="s-shop" autocomplete="organization" placeholder="Kwik Klin Laundry"></div>
+    <div class="j-row">
+      <div class="field"><label for="s-name">Your name *</label><input id="s-name" autocomplete="name" placeholder="Suyash"></div>
+      <div class="field"><label for="s-city">City</label><input id="s-city" autocomplete="address-level2" placeholder="Varanasi"></div>
+    </div>
+    <div class="j-row">
+      <div class="field"><label for="s-phone">WhatsApp number (optional)</label><input id="s-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210"></div>
+      <div class="field"><label for="s-email">Email *</label><input id="s-email" type="email" autocomplete="email" placeholder="you@email.com"></div>
+    </div>
+    <div class="j-row">
+      <div class="field"><label for="s-plan">Plan</label><select id="s-plan" onchange="paintChosen()"></select></div>
+      <div class="field"><label for="s-pass">Password * (8+)</label><input id="s-pass" type="password" autocomplete="new-password" placeholder="••••••••"></div>
+    </div>
+    <div class="msg" id="s-msg" role="alert"></div>
+    <button class="btn btn-primary btn-block j-go" type="button" id="s-go" onclick="doSignup()">Start your free trial</button>
+    <div class="switch">Already have an account? <a onclick="show('login')">Log in</a></div>
+  </div>
+
+  <!-- login -->
+  <div class="j-card" id="pane-login" style="display:none">
+    <h2>Log in</h2>
+    <p class="sub">Sign in with Google, or your email / mobile number and password.</p>
+    <div id="glogin" style="display:none">
+      <button class="gbtn" type="button" onclick="googleGo()"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.7-.4-3.9H24v7.1h12.1c-.2 1.8-1.6 4.6-4.5 6.4l6.9 5.3c4.1-3.8 6.6-9.3 6.6-14.9z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.3c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8.1 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.5 28.5c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 10z"/><path fill="#EA4335" d="M24 9.9c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.7 29.9 1.5 24 1.5 15.4 1.5 8.1 6.4 4.4 14l7.1 5.5C13.3 14.2 18.2 9.9 24 9.9z"/></svg>Log in with Google</button>
+      <div class="or">or</div>
+    </div>
+    <div class="field"><label for="l-email">Email or mobile number</label><input id="l-email" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="you@email.com or 98765 43210"></div>
+    <div class="field"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="msg" id="l-msg" role="alert"></div>
+    <button class="btn btn-primary btn-block j-go" type="button" id="l-go" onclick="doLogin()">Log in</button>
+    <div class="switch" id="forgot-g" style="display:none">Forgot password? <a href="/api/auth/google/start?reset=1">Reset with Google</a></div>
+    <div class="switch" id="forgot-s">Forgot password? Message our support on WhatsApp and we will reset it.</div>
+    <div class="switch">New here? <a onclick="show('signup')">Create an account</a></div>
+  </div>
+
+  <!-- naya password (Google ne pehchan pakki ki) -->
+  <div class="j-card" id="pane-reset" style="display:none">
+    <h2>Set a new password</h2>
+    <p class="sub">Google has confirmed it's you. This password works on the app and the dashboard.</p>
+    <div class="field"><label for="r-pass">New password (8+)</label><input id="r-pass" type="password" autocomplete="new-password" minlength="8"
+      onkeydown="if(event.key==='Enter')doReset()"></div>
+    <div class="msg" id="r-msg" role="alert"></div>
+    <button class="btn btn-primary btn-block j-go" type="button" id="r-go" onclick="doReset()">Save and open my account</button>
+  </div>
+</div></section>
+</main>
+
+<footer class="j-foot"><div class="wrap">
+  <div class="copy">
+    <span>© Kwik Klin · Varanasi · Built on WhatsApp, built for shop owners</span>
+    <span class="foot-legal"><a href="/">Home</a><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a><a href="/shipping-policy">Delivery</a></span>
+  </div>
+</div></footer>
+
+<script>
+// Saal wala daam pehle, par mahine mein: "₹250 / month · ₹3,000 billed yearly" (15 Nov 2026)
+let PLANS = [], ANNUAL = true, META = {}, GOOGLE_SIGNUP = false;
+// Do jhund — website (/#crm) jaise hi: ek aadmi wali dukaan, staff wali dukaan
+const GROUPS = [
+  { title: "For one person, one phone", sub: "Dhobi, press wala or a small counter — everything on the mobile app.", tag: "Mobile app", cls: "plans plans-2", solo: true },
+  { title: "For shops with staff", sub: "Dashboard for the owner, staff app for your team.", tag: "Dashboard + staff app", cls: "plans", solo: false },
+];
+
+async function api(path, body, method) {
+  const r = await fetch(path, {
+    method: method || (body ? "POST" : "GET"),
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || "Something went wrong");
+  return d;
+}
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+const isSolo = (p) => p.solo ?? ((p.flags || []).includes("solo_app") && !(p.flags || []).includes("staff_panel"));
+
+function setCycle(annual) {
+  ANNUAL = annual;
+  $("cy-m").classList.toggle("on", !annual);
+  $("cy-a").classList.toggle("on", annual);
+  renderPlans();
+}
+
+function planCard(p, g) {
+  const picked = $("s-plan") && $("s-plan").value === p.code && $("pane-signup").style.display !== "none";
+  return `<article class="plan ${p.popular ? "pop" : ""} ${picked ? "picked" : ""}" data-plan="${esc(p.code)}">
+      ${p.popular ? '<span class="badge">Most popular</span>' : ""}
+      <span class="plan-tag">${esc(g.tag)}</span>
+      <h3>${esc(p.name)}</h3>
+      <p class="muted">${esc(p.tagline)}</p>
+      <div class="amount"><b>${inr(ANNUAL ? Math.round(p.annual_inr / 12) : p.price_inr)}</b><span>/ month</span></div>
+      <p class="plan-trial">${p.trial_days ? p.trial_days + "-day free trial" + (p.trial_ai_replies ? ` with ${p.trial_ai_replies} AI replies` : "") + " · " : ""}+ GST</p>
+      ${p.setup_fee_inr ? `<p class="plan-trial">First payment ${inr(p.price_inr + p.setup_fee_inr)} — includes ${inr(p.setup_fee_inr)} one-time setup</p>` : ""}
+      <p class="save">${ANNUAL ? inr(p.annual_inr) + " billed yearly · ≈ " + inr(Math.round(p.annual_inr / 365)) + " a day · save " + inr(p.annual_saving_inr) : ""}</p>
+      ${p.quarterly_inr && p.halfyearly_inr ? `<p class="plan-trial">3 months ${inr(p.quarterly_inr)} · 6 months ${inr(p.halfyearly_inr)}</p>` : ""}
+      <ul>${p.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+      <button class="btn ${p.popular || picked ? "btn-primary" : "btn-ghost"} btn-block" type="button" onclick="pick('${esc(p.code)}')">${picked ? "Selected ✓" : "Choose " + esc(p.name)}</button>
+    </article>`;
+}
+
+function renderPlans() {
+  $("plans").innerHTML = GROUPS.map((g) => {
+    const list = PLANS.filter((p) => isSolo(p) === g.solo);
+    if (!list.length) return "";
+    return `<div class="plan-group"><div class="plan-group-h"><h3>${esc(g.title)}</h3><p class="muted">${esc(g.sub)}</p></div>
+      <div class="${list.length <= 2 ? "plans plans-2" : "plans"}">${list.map((p) => planCard(p, g)).join("")}</div></div>`;
+  }).join("");
+}
+
+/* Chuna hua plan form ke upar — trial ke din bhi usi plan ke */
+function paintChosen() {
+  const p = PLANS.find((x) => x.code === $("s-plan").value);
+  if (!p) return;
+  $("s-chosen").hidden = false;
+  $("s-chosen").innerHTML = `<span>${esc(p.name)} · ${inr(p.price_inr)}/month<small>${p.trial_days} days free · no card needed · prices + GST</small></span>
+    <a href="#plans-h" onclick="document.getElementById('plans').scrollIntoView({behavior:'smooth'});return false">Change plan</a>`;
+  $("s-sub").textContent = `${p.trial_days} days free — no card needed. Pay only if you love it.`;
+  renderPlans();
+}
+
+// Google: koi form nahi — wahan se lautte hi dukaan ban jaati hai, isi plan par
+// Login wale button se plan nahi bhejte: purana account plan nahi badalta, aur
+// naya banda bina chune kisi plan par na baithe (server default lagata hai).
+function googleGo(fromSignup) {
+  const plan = fromSignup ? ($("s-plan").value || "") : (new URLSearchParams(location.search).get("plan") || "");
+  location.href = "/api/auth/google/start" + (plan ? "?plan=" + encodeURIComponent(plan) : "");
+}
+
+function pick(code) {
+  $("s-plan").value = code;
+  show("signup");
+  paintChosen();
+}
+
+async function doReset() {
+  const password = $("r-pass").value;
+  if (password.length < 8) return msg("r-msg", "Use at least 8 characters");
+  $("r-go").disabled = true;
+  try {
+    const d = await api("/api/password/reset", { password });
+    msg("r-msg", "Password changed. Opening your account…", true);
+    setTimeout(() => (location.href = d.next_url || "/welcome"), 500);
+  } catch (e) { msg("r-msg", e.message); $("r-go").disabled = false; }
+}
+
+function show(which) {
+  $("pane-signup").style.display = which === "signup" ? "" : "none";
+  $("pane-login").style.display = which === "login" ? "" : "none";
+  $("pane-reset").style.display = which === "reset" ? "" : "none";
+  const pane = $(`pane-${which}`);
+  pane.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (which === "signup" && PLANS.length) paintChosen();
+}
+
+function msg(id, text, ok) {
+  const el = $(id);
+  el.className = "msg " + (ok ? "ok" : "err");
+  el.textContent = text;
+}
+
+async function doSignup() {
+  const btn = $("s-go");
+  const body = {
+    shop_name: $("s-shop").value.trim(),
+    owner_name: $("s-name").value.trim(),
+    city: $("s-city").value.trim() || null,
+    phone: $("s-phone").value.trim() || null,
+    email: $("s-email").value.trim(),
+    plan: $("s-plan").value,
+    password: $("s-pass").value,
+  };
+  if (!body.shop_name || !body.owner_name) {
+    return msg("s-msg", "Please fill every field marked *");
+  }
+  if (!GOOGLE_SIGNUP && !body.email) {
+    return msg("s-msg", "Email is required");
+  }
+  if (!GOOGLE_SIGNUP && (body.password || "").length < 8) {
+    return msg("s-msg", "Password must be at least 8 characters");
+  }
+  btn.disabled = true; btn.textContent = "Creating…";
+  try {
+    if (GOOGLE_SIGNUP) {
+      // email Google se aata hai, form se NAHI — warna koi bhi kisi aur ka
+      // email likh kar account bana le
+      const d = await api("/api/signup/google", {
+        shop_name: body.shop_name, owner_name: body.owner_name,
+        phone: body.phone, city: body.city, plan: body.plan,
+      });
+      msg("s-msg", "Done! Taking you in…", true);
+      return setTimeout(() => (location.href = d.next_url || "/welcome"), 700);
+    }
+    await api("/api/signup", body);
+    // seedha andar — signup ke baad dobara password poochna bekaar hai.
+    // Kahan jaana hai ye SERVER batata hai: naye client ko apna welcome
+    // page milta hai, kisi aur ki dukaan ka dashboard nahi.
+    const d = await api("/api/login", { email: body.email, password: body.password });
+    msg("s-msg", "Done! Taking you in…", true);
+    setTimeout(() => (location.href = d.next_url || "/welcome"), 700);
+  } catch (e) {
+    msg("s-msg", e.message);
+    btn.disabled = false; btn.textContent = "Start your free trial";
+  }
+}
+
+async function doLogin() {
+  const btn = $("l-go");
+  btn.disabled = true; btn.textContent = "One moment…";
+  try {
+    const d = await api("/api/login", {
+      email: $("l-email").value.trim(), password: $("l-pass").value,
+    });
+    msg("l-msg", "Welcome back, " + (d.user.name || "") + "!", true);
+    setTimeout(() => (location.href = d.next_url || "/welcome"), 500);
+  } catch (e) {
+    msg("l-msg", e.message);
+    btn.disabled = false; btn.textContent = "Log in";
+  }
+}
+
+(async function init() {
+  try {
+    META = await api("/api/plans");
+    PLANS = META.plans;
+    renderPlans();
+    $("s-plan").innerHTML = PLANS.map(
+      (p) => `<option value="${p.code}">${esc(p.name)} — ₹${p.price_inr}/month</option>`
+    ).join("");
+    const setupMax = Math.max(0, ...PLANS.map((p) => p.setup_fee_inr || 0));
+    $("note").textContent =
+      (META.gst_percent ? `Prices exclude GST (${META.gst_percent}%). ` : "")
+      + (setupMax > 0 ? `One-time setup on some plans (up to ₹${setupMax}) — we connect WhatsApp, set up your rate card and train you. `
+                      : "No setup fee. ")
+      + `Free trial: ${PLANS.map((p) => p.trial_days).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => b - a).join(" or ")} days, no card needed.`;
+    // Google button tabhi dikhta hai jab server par configure ho
+    if (META.google_login) {
+      $("gsignup").style.display = "";
+      $("glogin").style.display = "";
+    }
+
+    // Website ke card se aaya (?plan=solo): wahi plan chuna hua, seedha form
+    const want = new URLSearchParams(location.search).get("plan");
+    if (want && PLANS.some((p) => p.code === want)) pick(want);
+
+    // Google se wapas aaya banda: email/naam pehle se bhar do, password ka
+    // khana hata do — uska password hai hi nahi.
+    const pend = await api("/api/auth/google/pending").catch(() => ({}));
+    if (pend.pending) {
+      GOOGLE_SIGNUP = true;
+      $("s-email").value = pend.email || "";
+      $("s-email").disabled = true;
+      $("s-name").value = pend.name || "";
+      $("s-pass").closest(".field").style.display = "none";
+      $("gsignup").style.display = "none";
+      $("gnote").style.display = "";
+      $("gnote").textContent = `${pend.email} is verified via Google. Just fill in your shop details.`;
+      $("s-go").textContent = "Create your shop";
+      show("signup");
+      $("s-shop").focus();
+    }
+
+    // Google login fail hua to wajah dikhao, chup mat raho
+    const err = new URLSearchParams(location.search).get("err");
+    if (err) { show("login"); msg("l-msg", err); }
+    else if (new URLSearchParams(location.search).get("reset")) show("reset");
+    else if (location.hash === "#login") show("login");
+    else if (location.hash === "#signup" && !want) show("signup");
+  } catch (e) {
+    $("plans").innerHTML = `<p class="muted plan-note">Could not load plans: ${esc(e.message)}</p>`;
+  }
+})();
+
+/* Har password field par show/hide eye — user apna typed password dekh
+   sake (galat password ki sabse aam wajah yahi hoti hai). */
+(function attachEyes() {
+  var SHOW = "👁", HIDE = "🙈";
+  document.querySelectorAll('input[type="password"]').forEach(function (inp) {
+    if (inp.closest(".pw-wrap")) return;
+    var wrap = document.createElement("div");
+    wrap.className = "pw-wrap";
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "eye";
+    b.textContent = SHOW;
+    b.setAttribute("aria-label", "Show password");
+    b.addEventListener("click", function () {
+      var show = inp.type === "password";
+      inp.type = show ? "text" : "password";
+      b.textContent = show ? HIDE : SHOW;
+      b.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      inp.focus();
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

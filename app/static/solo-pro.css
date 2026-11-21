@@ -1,0 +1,155 @@
+/* App ka roop aur Pro ke card (solo.js). Neela + sunehra ab poore app ka rang hai
+ * (tokens.css). Sirf .so-pro ke andar wala "✦" badge plan ke hisaab se hai;
+ * bikri ka card, target aur baaki pp-* screens solo.js Pro look par hi banata hai. */
+
+:root {
+  --pp-deep: var(--navy-deep);
+  --pp-mid: var(--navy);
+  --pp-gold: var(--gold);
+  --pp-gold-ink: var(--gold-ink);
+  --pp-bg: var(--bg);
+  --pp-line: var(--border);
+}
+body { background: var(--pp-bg); }
+.app { background: var(--pp-bg); }
+
+/* ─── Header aur niche ka tab bar ─────────────────────────────────── */
+.top { background: linear-gradient(120deg, var(--pp-deep), var(--pp-mid)); }
+.so-pro .top .who span::before {
+  content: "✦ " attr(data-tier); display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 99px;
+  background: linear-gradient(120deg, #ffe08a, var(--pp-gold)); color: #3d2700;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .4px;
+}
+.so-pro .top .who { flex: 1 1 auto; }
+.so-pro .top .who span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.so-pro .top .acts { flex: 0 0 auto; }
+.bottom { border-top-color: var(--pp-line); box-shadow: 0 -6px 22px rgba(12, 20, 48, .08); }
+.bottom button.on { color: var(--pp-mid); }
+.bottom button.fab i { background: linear-gradient(135deg, var(--pp-mid), var(--pp-deep)); color: var(--pp-gold); }
+
+/* ─── Bikri ka bada card ──────────────────────────────────────────── */
+.pp-hero {
+  display: block; width: 100%; margin: 2px 0 12px; padding: 16px; border: 0; border-radius: 20px; text-align: left;
+  font: inherit; color: #fff; cursor: pointer;
+  background: radial-gradient(120% 90% at 100% 0, rgba(247, 192, 74, .24), transparent 60%),
+    linear-gradient(145deg, var(--pp-mid), var(--pp-deep));
+  box-shadow: 0 12px 28px rgba(12, 20, 48, .28);
+  font-variant-numeric: tabular-nums;
+}
+div.pp-hero { cursor: default; }
+.pp-hero-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pp-lbl { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .78); }
+.pp-big { display: block; margin-top: 4px; font-size: 36px; line-height: 1.1; font-weight: 800; letter-spacing: -.5px; overflow-wrap: anywhere; }
+.pp-yest { display: block; margin-top: 2px; font-size: 12.5px; color: rgba(255, 255, 255, .72); }
+.pp-delta {
+  padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 800; white-space: nowrap;
+  color: #7dffb2; background: rgba(125, 255, 178, .14);
+}
+.pp-delta.down { color: #ffb4b4; background: rgba(255, 180, 180, .15); }
+.pp-delta small { font-size: 10.5px; font-weight: 600; opacity: .85; }
+
+.pp-chart { display: flex; align-items: flex-end; gap: 6px; height: 84px; margin-top: 14px; }
+.pp-bar { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 4px; }
+.pp-bar i { display: block; flex: 0 0 auto; max-height: calc(100% - 18px); border-radius: 5px 5px 2px 2px; background: rgba(255, 255, 255, .26); }
+.pp-bar.now i { background: linear-gradient(180deg, #ffe08a, var(--pp-gold)); }
+.pp-bar span { height: 14px; font-size: 10.5px; line-height: 14px; text-align: center; color: rgba(255, 255, 255, .7); white-space: nowrap; overflow: hidden; }
+.pp-bar.now span { color: var(--pp-gold); font-weight: 700; }
+.pp-chart.thin { gap: 2px; height: 64px; }
+.pp-chart.thin .pp-bar i { max-height: 100%; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #ffe08a, var(--pp-gold)); }
+
+.pp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .14); }
+.pp-stats div { min-width: 0; }
+.pp-stats b { display: block; font-size: 15.5px; font-weight: 750; overflow-wrap: anywhere; }
+.pp-stats span { display: block; margin-top: 1px; font-size: 11.5px; color: rgba(255, 255, 255, .7); }
+
+/* ─── Naya bill + chaar kaam ──────────────────────────────────────── */
+.btn.go { border: 0; background: linear-gradient(120deg, #1a4bd6, var(--brand-strong)); box-shadow: 0 6px 16px rgba(31, 90, 240, .24); }
+.btn.go:disabled { box-shadow: none; }
+.pp-acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.pp-act {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 92px; padding: 10px 4px; min-width: 0;
+  border: 1px solid var(--pp-line); border-radius: 16px; background: #fff; color: var(--ink); font: inherit; cursor: pointer;
+}
+.pp-act:active, .pp-task:active { background: #eef1fa; }
+.pp-act b { font-size: 11.5px; font-weight: 700; line-height: 1.2; text-align: center; }
+.pp-act small { min-height: 14px; font-size: 11px; color: var(--ink-3); }
+.pp-ico {
+  flex: 0 0 auto; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px;
+  background: #e9edfb; color: var(--pp-mid); font-size: 19px;
+}
+.pp-ico .ic { width: 20px; height: 20px; }
+.pp-ico.hot { background: var(--error-soft); color: var(--error); }
+.pp-ico.ok { background: var(--success-soft); color: var(--success); }
+.pp-ico.warm { background: var(--warning-soft); color: var(--warning); }
+.pp-ico.info { background: var(--info-soft); color: var(--info); }
+
+/* ─── Safed card: lakshya, kaam, report ───────────────────────────── */
+.pp-card {
+  display: block; width: 100%; margin-bottom: 12px; padding: 14px; border: 1px solid var(--pp-line); border-radius: 16px;
+  background: #fff; color: var(--ink); text-align: left; font: inherit;
+}
+.pp-card h3 { margin: 0 0 10px; font-size: 15px; }
+/* Solo Pro: app se poora dashboard (solo.js pp-dash) */
+.pp-dash { display: grid; gap: 8px; }
+.pp-dash small { color: var(--ink-3, #667089); }
+.pp-grow { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pp-grow b { font-size: 14.5px; font-weight: 700; overflow-wrap: anywhere; }
+.pp-grow small { font-size: 12px; color: var(--ink-3); }
+.pp-goal { display: flex; align-items: center; gap: 12px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.pp-goal em { flex: 0 0 auto; font-style: normal; font-size: 13px; font-weight: 700; color: var(--pp-mid); }
+.pp-ring { flex: 0 0 auto; width: 62px; height: 62px; transform: rotate(-90deg); }
+.pp-ring circle { fill: none; stroke: #e9edfb; stroke-width: 7; }
+.pp-ring circle.on { stroke: #d99a14; stroke-linecap: round; }
+.pp-ring text { transform: rotate(90deg); transform-origin: 32px 32px; font-size: 13px; font-weight: 800; fill: var(--ink); }
+
+.pp-tasks { border: 1px solid var(--pp-line); border-radius: 16px; overflow: hidden; background: #fff; margin-bottom: 8px; }
+.pp-task {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 10px 12px; border: 0;
+  border-bottom: 1px solid var(--pp-line); background: #fff; color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.pp-task:last-child { border-bottom: 0; }
+.pp-task > i { flex: 0 0 auto; font-style: normal; font-size: 20px; color: var(--ink-3); }
+
+.pp-share { padding: 8px 0; }
+.pp-share .so-top { font-size: 14px; }
+.pp-share small { color: var(--ink-3); font-size: 11.5px; }
+.pp-rank { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--pp-line); font-variant-numeric: tabular-nums; }
+.pp-rank:first-of-type { border-top: 0; }
+.pp-rank em {
+  flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  font-style: normal; font-size: 13px; font-weight: 800; color: var(--pp-mid); background: #e9edfb;
+}
+.pp-rank:first-of-type em { color: #3d2700; background: linear-gradient(120deg, #ffe08a, var(--pp-gold)); }
+
+.pp-perks { background: linear-gradient(145deg, #fffaf0, #fff); border-color: #f2dfae; }
+.pp-perks > b { color: var(--pp-gold-ink); font-size: 14.5px; }
+.pp-perks ul { margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; }
+
+/* ─── Purani screens ka roop (orders, udhaar, grahak, plan) ───────── */
+.so-h { margin: 16px 0 8px; color: var(--ink); font-size: 15px; font-weight: 750; }
+.so-card {
+  border: 1px solid var(--pp-line); border-left: 1px solid var(--pp-line); border-radius: 16px; background: #fff;
+  box-shadow: 0 2px 8px rgba(12, 20, 48, .05);
+}
+.so-card.late { border-left: 4px solid var(--error); }
+.so-tile { border-color: var(--pp-line); border-radius: 16px; background: #fff; }
+.so-total { border: 0; border-radius: 16px; color: #fff; background: linear-gradient(145deg, var(--pp-mid), var(--pp-deep)); }
+.so-plan, #list > .card { border-color: var(--pp-line); border-radius: 16px; }
+.so-bar { background: #e9edfb; }
+.so-bar i:not(.hot):not(.warm) { background: linear-gradient(90deg, var(--pp-mid), #4a63c9); }
+.chips button.on, .so-chips button.on { background: var(--pp-mid); border-color: var(--pp-mid); color: #fff; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pp-bar i { animation: pp-rise .45s ease-out both; transform-origin: bottom; }
+  @keyframes pp-rise { from { transform: scaleY(.15); opacity: .4; } to { transform: none; opacity: 1; } }
+}
+
+/* Solo ke order card: wahi halke button jo staff app mein */
+.so-acts .btn.sm { min-height: 38px; font-size: 13px; }
+.so-acts .btn.go { background: var(--surface); color: var(--brand-ink); border: 1.5px solid var(--brand-strong); box-shadow: none; }
+
+/* Offer: kabhi-kabhi aane wala ad card */
+.so-offer { position: relative; margin: 0 0 12px; border: 1.5px solid #f2dfae; background: linear-gradient(145deg, #fffaf0, #fff); }
+.so-offer-tag { display: inline-block; margin-bottom: 6px; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; color: #3d2700; background: linear-gradient(120deg, #ffe08a, var(--gold)); }
+.so-promo-t { margin: 0 34px 4px 0; font-size: 16px; font-weight: 750; overflow-wrap: anywhere; }
+.so-promo-p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere; }

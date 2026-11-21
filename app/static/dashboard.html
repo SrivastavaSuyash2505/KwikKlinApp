@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kwik Klin — Laundry Pro</title>
+<meta name="description" content="Kwik Klin Laundry Pro — WhatsApp-first admin panel: orders, bills, customers, campaigns and an AI agent for the shop.">
+<meta name="theme-color" content="#0c1430">
+<link rel="manifest" href="/admin/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/admin/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KK Owner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%BA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- fonts load WITHOUT blocking first paint: text shows in the system font,
+     Inter swaps in when it lands (display=swap). media-flip trick, no JS lib. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all';this.onload=null">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<!-- app.css is mobile-first and carries every breakpoint — one sheet, one cascade.
+     It stays render-blocking on purpose: it IS the critical CSS (too big to inline). -->
+<link rel="stylesheet" href="/admin/static/tokens.css?v=rs3">
+<link rel="stylesheet" href="/admin/static/app.css?v=bs1">
+<!-- ui-v2: the visual layer (type, surfaces, mobile chrome). Loaded last so
+     it wins ties; app.css keeps layout and behaviour. -->
+<link rel="stylesheet" href="/admin/static/ui-v2.css?v=11">
+<link rel="stylesheet" href="/admin/static/kk-labels.css?v=4">
+<link rel="stylesheet" href="/admin/static/kk-bill.css?v=9">
+<link rel="stylesheet" href="/admin/static/garments.css?v=6">
+<link rel="stylesheet" href="/admin/static/growth.css?v=2">
+<link rel="stylesheet" href="/admin/static/costing.css?v=7">
+<link rel="stylesheet" href="/admin/static/plan-ring.css?v=1">
+<link rel="stylesheet" href="/admin/static/campaign-shared.css?v=1">
+<link rel="stylesheet" href="/admin/static/kk-ds.css?v=2">
+<link rel="stylesheet" href="/admin/static/kk-passkey.css?v=1">
+<!-- defer: downloads during HTML parse, runs before DOMContentLoaded — nothing blocks -->
+<script src="/admin/static/kk-ds.js?v=2" defer></script>
+<script src="/admin/static/plan-ring.js?v=1" defer></script>
+<script src="/admin/static/campaign-shared.js?v=1" defer></script>
+<script src="/admin/static/kk-passkey.js?v=1" defer></script>
+<script src="/admin/static/app.js?v=ui2-42" defer></script>
+<script src="/admin/static/gbp-poster.js?v=5" defer></script>
+<script src="/admin/static/kk-labels.js?v=3" defer></script>
+<script src="/admin/static/kk-bill.js?v=4" defer></script>
+<script src="/admin/static/garments.js?v=6" defer></script>
+<script src="/admin/static/growth.js?v=2" defer></script>
+<script src="/admin/static/costing.js?v=6" defer></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ======== sidebar (off-canvas drawer under 1024px) ======== -->
+  <div class="side-ov" id="side-ov" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-badge">KK</div>
+      <div><h1>Kwik Klin</h1><small>Laundry Pro</small></div>
+    </div>
+    <nav class="nav">
+      <div class="navsec">Operations</div>
+      <div data-s="dashboard" onclick="go('dashboard')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-dashboard"/></svg>Dashboard</div>
+      <div data-s="inbox" onclick="go('inbox')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-inbox"/></svg>Inbox</div>
+      <div data-s="newbill" onclick="go('newbill')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg>New bill</div>
+      <div data-s="bills" onclick="go('bills')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-receipt"/></svg>Bill history</div>
+      <div data-s="scan" onclick="go('scan')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-scan"/></svg>Scan station</div>
+      <div data-s="customers" onclick="go('customers')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-users"/></svg>Customers</div>
+      <div class="navsec">Money</div>
+      <div data-s="expenses" onclick="go('expenses')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-expense"/></svg>Expenses</div>
+      <div data-s="costing" onclick="go('costing')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-reports"/></svg>AI Costing</div>
+      <div data-s="reports" onclick="go('reports')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-reports"/></svg>Reports</div>
+      <div class="navsec">Growth</div>
+      <div data-s="polisher" onclick="go('polisher')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-ledger"/></svg>Polisher ledger</div>
+      <div data-s="growth" onclick="go('growth')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-usage"/></svg>Growth</div>
+      <div data-s="campaigns" onclick="go('campaigns')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-campaign"/></svg>Campaigns</div>
+      <div class="nav-action" onclick="openGbpPoster()"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-image"/></svg>Google poster</div>
+      <div class="navsec">Agent</div>
+      <div data-s="business" onclick="go('business')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-briefcase"/></svg>Business Manager</div>
+      <div data-s="tasks" onclick="go('tasks')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-task"/></svg>Tasks</div>
+      <div data-s="agents" onclick="go('agents')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-agent"/></svg>Agents</div>
+      <div data-s="usage" onclick="go('usage')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-usage"/></svg>AI usage</div>
+      <div data-s="training" onclick="go('training')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-training"/></svg>AI training</div>
+      <div data-s="activity" onclick="go('activity')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-activity"/></svg>Activity</div>
+      <div class="navsec">System</div>
+      <div data-s="settings" onclick="go('settings')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-settings"/></svg>Settings</div>
+    </nav>
+    <div class="side-foot">
+      <button type="button" class="side-install" id="side-install" hidden>📲 Install app on this phone</button>
+      <div class="sysline"><span class="dot"></span>Postgres · WhatsApp bot active</div>
+      <div class="logout" onclick="kkLogout()"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-logout"/></svg>Log out admin</div>
+    </div>
+  </aside>
+
+  <!-- ======== main ======== -->
+  <main class="main">
+    <div class="topbar">
+      <button class="burger" aria-label="Open menu" onclick="toggleSidebar()"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-menu"/></svg></button>
+      <h2 id="mob-title">Dashboard</h2>
+    </div>
+
+    <!-- Phone par app ki tarah install. Android: browser ka install prompt;
+         iPhone Safari prompt deta hi nahi, wahan tareeka likh kar. -->
+    <div id="install-bar" class="install-bar" hidden>
+      <span id="install-msg">Install Kwik Klin on this phone — opens like an app</span>
+      <button type="button" class="btn sm" id="install-go">Install</button>
+      <button type="button" class="install-x" id="install-x" aria-label="Hide">✕</button>
+    </div>
+
+    <!-- Dashboard -->
+    <section id="sec-dashboard">
+      <div class="pagehead dash-head">
+        <div><h2 id="dash-hello">Dashboard</h2><p id="dash-date">Today at a glance</p></div>
+        <div class="actions">
+          <button class="btn ghost" onclick="loadDashboard()" aria-label="Refresh dashboard"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg><span class="hide-sm">Refresh</span></button>
+          <button class="btn" onclick="go('newbill')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg>New bill</button>
+        </div>
+      </div>
+      <!-- static skeletons paint on slow 4G before app.js + the API answer;
+           loadDashboard() replaces them with real numbers -->
+      <div class="grid kpis" id="kpis"><div class="card skel" style="height:96px"></div><div class="card skel" style="height:96px"></div><div class="card skel" style="height:96px"></div><div class="card skel" style="height:96px"></div></div>
+
+      <div class="card dash-orders-card">
+        <div class="doc-head">
+          <div class="doc-title"><h3>Active orders</h3><span class="muted" id="dash-count"></span></div>
+          <div class="filters doc-tools">
+            <label class="searchbox"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-search"/></svg><input type="search" aria-label="Search orders" placeholder="Search name, phone or order…" oninput="dashFilter.q=this.value;dashFilter.page=1;renderOrdersDeb()"></label>
+            <select aria-label="Payment filter" onchange="dashFilter.pay=this.value;dashFilter.page=1;renderOrders()">
+              <option value="">All payments</option><option value="PAID">Paid</option>
+              <option value="PARTIAL">Partial</option><option value="UNPAID">Unpaid</option>
+            </select>
+          </div>
+        </div>
+        <div class="chips" id="dash-chips"></div>
+        <div class="listcard" id="dash-orders"><div class="skel skelrow"></div><div class="skel skelrow"></div><div class="skel skelrow"></div><div class="skel skelrow"></div></div>
+        <div class="pager" id="dash-pager"></div>
+      </div>
+
+      <div class="dash-side">
+        <div class="card" id="wa-stats"><span class="muted">Loading WhatsApp stats…</span></div>
+        <div class="card" id="growth-analytics">
+          <div class="panel-head"><h3>Growth</h3><button class="btn sm ghost" onclick="refreshGrowthPanel(this)" aria-label="Refresh growth"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg></button></div>
+          <div id="growth-analytics-body"><span class="muted">Loading…</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inbox -->
+    <section id="sec-inbox" style="display:none">
+      <!-- Inbox UI change: keep the existing sidebar drawer reachable on phones. -->
+      <div class="pagehead"><button class="inbox-mobile-burger" onclick="toggleSidebar()" aria-label="Open menu" title="Open menu"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-menu"/></svg></button><div class="inbox-title"><h2>Inbox</h2><p>WhatsApp — see and reply yourself</p></div>
+        <div class="actions">
+          <button class="btn ghost ib-ico" onclick="loadThreads()" aria-label="Refresh chats"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg></button>
+          <button class="btn ib-ico" onclick="newChatModal()" aria-label="New chat"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg></button>
+        </div></div>
+      <div class="inboxwrap">
+        <div class="threads">
+          <div class="th-head">
+            <b class="th-title">Chats</b>
+            <div class="spacer"></div>
+            <button class="th-ico" onclick="loadThreads()" title="Refresh" aria-label="Refresh chats"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg></button>
+            <button class="th-ico" onclick="bulkImportModal()" title="Import numbers" aria-label="Import numbers"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-upload"/></svg></button>
+            <button class="th-ico th-new" onclick="newChatModal()" title="New chat" aria-label="New chat"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg></button>
+          </div>
+          <div class="th-search"><input id="th-search" type="search" aria-label="Search chats" placeholder="Search name, number…" oninput="threadSearch(this.value)"></div>
+          <div class="th-filters" role="group" aria-label="Filter conversations">
+            <button class="on" data-th-filter="all" aria-pressed="true" onclick="setThreadFilter('all')">All</button>
+            <button data-th-filter="unread" aria-pressed="false" onclick="setThreadFilter('unread')">Unread</button>
+            <button data-th-filter="customers" aria-pressed="false" onclick="setThreadFilter('customers')">Customers</button>
+            <button data-th-filter="staff" aria-pressed="false" onclick="setThreadFilter('staff')">Staff</button>
+          </div>
+          <div id="th-list" style="flex:1;overflow-y:auto" onscroll="onThreadScroll(this)"><div style="padding:12px"><div class="skel skelrow"></div><div class="skel skelrow"></div><div class="skel skelrow"></div></div></div>
+        </div>
+        <div class="chatpane" style="position:relative">
+          <div class="chathead" id="chat-head"><span class="muted">Pick a conversation on the left…</span></div>
+          <div class="chat-searchbar" id="chat-searchbar">
+            <input id="chat-search-input" type="search" placeholder="Find in this conversation…" aria-label="Find in this conversation" oninput="filterChatMessages()">
+            <span id="chat-search-count" class="muted" aria-live="polite"></span>
+            <button class="th-ico" onclick="toggleChatSearch()" aria-label="Close message search">✕</button>
+          </div>
+          <div class="chatlog" id="chat-log"></div>
+          <div class="newmsg-pill" id="newmsg-pill" onclick="scrollChatBottom()">⬇ New messages</div>
+          <div class="replybar" id="reply-bar"></div>
+          <div class="ai-sugg" id="ai-sugg" hidden aria-live="polite"></div>
+          <div class="var-prev" id="chat-varprev" hidden aria-live="polite"></div>
+          <div class="composer" style="position:relative">
+            <div class="emojis" id="emoji-pal"></div>
+            <div class="var-pal" id="var-pal" role="menu" aria-label="Insert variable"></div>
+            <button class="btn ghost sm" onclick="toggleEmojis()" title="Emoji" aria-label="Emoji picker">😊</button>
+            <button class="btn ghost sm ai-sugg-btn" id="ai-sugg-btn" onclick="aiSuggest()" title="AI reply suggestions — reads the whole chat" aria-label="AI reply suggestions">✨</button>
+            <button class="btn ghost sm var-btn" onclick="toggleVarPicker()" title="Insert variable — {name}, {due_amount}…" aria-label="Insert variable">{ }</button>
+            <label class="btn ghost sm" style="cursor:pointer" title="Attach a photo" aria-label="Attach a photo">📎<input type="file" accept="image/*" style="display:none" onchange="sendMedia(this)" aria-label="Photo to send"></label>
+            <textarea id="chat-input" aria-label="Message" enterkeyhint="send" placeholder="Type a message" rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendChat()}" oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,140)+'px';varPreviewSoon()"></textarea>
+            <button class="btn" onclick="sendChat()" title="Send" aria-label="Send">➤</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- New bill -->
+    <section id="sec-newbill" style="display:none">
+      <div class="pagehead"><div><h2>New bill</h2><p>Customer, tap the clothes, save — the customer gets it on WhatsApp</p></div></div>
+      <div id="nb-wa-notice" class="notice" style="display:none">
+        WhatsApp is not connected — customers won't get automatic bill/status messages.
+        Use <b>Share on WhatsApp</b> after each bill, or <a href="/welcome">connect your number</a>.
+      </div>
+      <!-- Step 4 (bill ban gaya): labels + receipt + status — kk-bill.js ka
+           saanjha UI, staff app wala hi. Form chhup jaata hai, "New bill" se wapas. -->
+      <div id="nb-done" class="kb" data-step="4" hidden><div id="nb-done-steps"></div><div class="kb-donewrap" id="nb-done-body"></div></div>
+      <!-- Naya bill: 1 Customer → 2 Clothes → 3 Review & pay — staff app wala
+           hi roop (kk-bill.css: kapdon ke icon, chips, tiles, bada total).
+           Saare khaane wahi purane ids aur purane function (calcBill,
+           saveBill…); naya sirf dikhawat + ek waqt ek kadam (app.js: nbw*).
+           Khaane DOM mein hi rehte hain — 3 se 2 par jaakar wapas aao, kuch
+           nahi mitta. Neeche ki patti .kb ke BAHAR hai: .kb container hai, aur
+           container ke andar position:fixed phone par screen se nahi chipakta. -->
+      <div class="nbw" id="nb-form" data-step="1">
+        <div class="kb nbw-kb">
+          <div class="nbw-steps" id="nb-steps"></div>
+          <div class="kk-alert" id="nb-draft-note" hidden></div>
+
+          <section class="nbw-pane" data-pane="1" aria-label="Step 1 — Customer"><div class="kb-card">
+            <h3 class="kb-h">1. Customer details</h3>
+            <div id="nbw-custin">
+              <div class="nbw-2">
+                <div class="autocomplete kb-ac">
+                  <label class="kb-label" for="nb-phone">Mobile number *</label>
+                  <div class="kb-search"><svg class="ic kb-si" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-search"/></svg><input id="nb-phone" type="tel" inputmode="numeric" placeholder="98765 43210" maxlength="15" oninput="custAc('nb-phone')" autocomplete="off"></div>
+                  <div class="kb-acp" id="nb-ac"></div>
+                  <small class="kb-err" id="nb-phone-err"></small>
+                </div>
+                <div class="autocomplete kb-ac">
+                  <label class="kb-label" for="nb-name">Customer name</label>
+                  <div class="kb-search"><svg class="ic kb-si" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-user"/></svg><input id="nb-name" type="text" placeholder="Start typing a name…" maxlength="60" oninput="custAc('nb-name')" autocomplete="off"></div>
+                  <div class="kb-acp" id="nb-ac-name"></div>
+                </div>
+              </div>
+              <p class="kb-hint" id="nb-cust-hint">Old customers show up as you type — tap one to pick.</p>
+            </div>
+            <!-- chuna hua grahak: naam, orders, New / Regular / VIP -->
+            <div id="nbw-cust" hidden></div>
+          </div>
+          <!-- Do hi raaste: walkin = grahak dukaan par laaya, wahin se le jaayega
+               (READY par delivery boy ko kaam nahi); pickup = delivery boy ghar se
+               laata hai aur ready hone par wapas pahunchata hai -->
+          <div class="kb-card">
+            <h3 class="kb-h">Where are the clothes?</h3>
+            <div class="kb-mode nbw-ful" role="radiogroup" aria-label="Walk-in or pickup">
+              <button type="button" class="on" data-ful="walkin" role="radio" aria-checked="true" onclick="nbSetFulfil('walkin')"><span class="em" aria-hidden="true">🏪</span><b>At the shop</b><small>Count now, bill now</small></button>
+              <button type="button" id="nb-collect" data-ful="pickup" role="radio" aria-checked="false" onclick="nbSetFulfil('pickup')"><span class="em" aria-hidden="true">🛵</span><b>Pickup from home</b><small>Delivery boy collects, delivers back</small></button>
+            </div>
+            <p class="kb-hint" id="nb-pick-hint">Customer brought the clothes and collects them from the shop — no delivery run.</p>
+            <div id="nb-pickup-box" hidden>
+              <label class="kb-label" for="nb-pickup-date">Pickup date</label>
+              <input id="nb-pickup-date" type="date" onchange="$('nb-pickup-err').textContent='';calcBill()">
+              <small class="kb-err" id="nb-pickup-err"></small>
+            </div>
+          </div>
+          <!-- ⚡ charge Settings se (badlo ya maaf karo), delivery jaldi, staff ko sabse upar -->
+          <div class="kb-card urg">
+            <div class="kb-switchrow"><div><b>⚡ Urgent</b><small id="nb-urg-hint"></small></div>
+              <button type="button" class="kb-sw" id="nb-urgent-btn" aria-pressed="false" aria-label="Urgent" onclick="nbToggleUrgent()"></button></div>
+            <div class="nbw-urg" id="nb-urg-box" hidden>
+              <label class="kb-money"><span>₹</span><input id="nb-urg-amt" type="number" min="0" step="1" inputmode="decimal" aria-label="Urgent charge" oninput="nbUrgentInput()"></label>
+              <button type="button" class="kb-btn ghost sm" onclick="nbUrgentWaive()">No charge</button>
+              <button type="button" class="kb-btn ghost sm" onclick="nbUrgentReset()">Default</button>
+              <small class="kb-sum-note" id="nb-urg-note"></small>
+            </div>
+          </div></section>
+
+          <section class="nbw-pane" data-pane="2" aria-label="Step 2 — Clothes"><div class="kb-card">
+            <h3 class="kb-h">2. Add clothes / items <small id="nbw-count"></small></h3>
+            <div class="kb-tools">
+              <div class="kb-ac"><div class="kb-search"><svg class="ic kb-si" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-search"/></svg><input id="nbq-q" type="search" placeholder="Search" aria-label="Search clothes" autocomplete="off" enterkeyhint="done"></div>
+                <div class="kb-acp" id="nbq-p"></div></div>
+              <button type="button" class="kb-btn ghost" id="nb-newrate" onclick="nbNewRate()">＋ Custom</button>
+            </div>
+            <!-- grahak chunte hi: ye aam taur par kya deta hai — chip = bill mein, × = bahar -->
+            <div class="kb-usual" id="nb-usual"></div>
+            <!-- Service chips → category chips → kapdon ke tiles (icon + daam).
+                 Ek tap = 1 juda, dobara tap = 2. Neeche jode hue kapde. -->
+            <div class="kb-chips svc" id="nbq-svcs" role="tablist" aria-label="Service"></div>
+            <div class="kb-chips" id="nbw-cats" role="tablist" aria-label="Category"></div>
+            <div class="kb-tiles" id="nbq-items" aria-live="polite"></div>
+            <small class="kb-err" id="nb-items-err"></small>
+            <div class="kb-items" id="nb-cart"></div>
+            <!-- purana line editor: ab kahin dikhta nahi (ui-v2), par renderLines isi mein likhta hai -->
+            <div class="nb-rows" hidden><div id="nb-lines"></div></div>
+          </div></section>
+
+          <section class="nbw-pane" data-pane="3" aria-label="Step 3 — Review and pay">
+          <div class="kb-card nb-summary" id="nb-more">
+            <h3 class="kb-h">3. Order <small id="nbw-count3"></small></h3>
+            <!-- kis grahak ka, kitne kapde — tap karke wapas us kadam par -->
+            <div class="nbw-recap" id="nb-recap"></div>
+            <div class="kb-recap" id="nb-recap-lines"></div>
+          </div>
+          <div class="kb-card">
+            <h3 class="kb-h">Notes <small>optional · shop and staff only, not sent to the customer</small></h3>
+            <div class="kb-slots" id="nb-notechips">
+              <button type="button" onclick="nbNoteChip(this)" data-note="Stain">Stain</button><button type="button" onclick="nbNoteChip(this)" data-note="Delicate">Delicate</button>
+              <button type="button" onclick="nbNoteChip(this)" data-note="No starch">No starch</button><button type="button" onclick="nbNoteChip(this)" data-note="Button missing">Button missing</button>
+              <button type="button" onclick="nbNoteChip(this)" data-note="Colour bleed">Colour bleed</button>
+            </div>
+            <textarea id="nb-notes" maxlength="500" placeholder="e.g. steam iron, careful wash, stain on collar" style="margin-top:8px"></textarea>
+          </div>
+          <div class="kb-card">
+            <h3 class="kb-h">Offers &amp; discount <button type="button" class="kb-link" data-nbw="coupon">Coupon code</button></h3>
+            <div id="nbw-coupon" hidden>
+              <input id="nb-coupon" type="text" placeholder="Coupon code, e.g. OFF10" maxlength="30" aria-label="Coupon code" onchange="nbRewardPaint()" autocomplete="off">
+              <p class="kb-hint">Checked and applied when the bill is saved.</p>
+            </div>
+            <div id="nb-reward" hidden></div>
+            <div class="kb-sum-row"><span>Discount</span><span class="kb-ctl">
+              <label class="kb-money"><span>₹</span><input id="nb-disc" type="number" inputmode="decimal" min="0" placeholder="0" aria-label="Discount in rupees" oninput="calcBill()"></label>
+              <select id="nb-preset" aria-label="Discount offer" onchange="applyPreset()"><option value="">No discount</option></select>
+            </span></div>
+            <p class="kb-sum-note" id="nb-disc-note"></p>
+          </div>
+          <div class="kb-card">
+            <h3 class="kb-h">Payment</h3>
+            <div class="kb-sum-row"><span>Total items</span><b id="nbw-pcs">0</b></div>
+            <div class="kb-sum-row"><span>Subtotal</span><b id="nb-sub">₹0</b></div>
+            <div class="kb-sum-row neg" id="nbw-savrow" hidden><span>Customer saves</span><b id="nbw-sav">₹0</b></div>
+            <div class="kb-sum-row" id="nb-urg-sum" hidden><span>⚡ Urgent charge</span><b id="nb-urg-sumamt">₹0</b></div>
+            <div class="kb-sum-row"><span>GST <small id="nbw-gstp">18%</small></span><span class="kb-ctl">
+              <label class="nbw-tgl"><input type="checkbox" id="nb-gst" onchange="calcBill()" aria-label="Add GST"><i aria-hidden="true"></i></label>
+              <b id="nb-gstamt">₹0</b>
+            </span></div>
+            <div class="kb-total"><span>Order total</span><b id="nb-total">₹0</b></div>
+            <div class="kb-sum-row"><span>Advance received</span><span class="kb-ctl">
+              <label class="kb-money"><span>₹</span><input id="nb-adv" type="number" inputmode="decimal" min="0" placeholder="0" aria-label="Advance paid" oninput="calcBill()"></label>
+              <button type="button" class="kb-btn ghost sm" id="nbw-advfull" data-nbw="advfull">Full</button>
+            </span></div>
+            <div class="kb-seg" id="nbw-pm" role="radiogroup" aria-label="Payment method" style="margin-top:8px">
+              <button type="button" data-pm="CASH" class="on">Cash</button><button type="button" data-pm="UPI">UPI</button>
+              <button type="button" data-pm="CARD">Card</button><button type="button" data-pm="SPLIT">Split</button>
+            </div>
+            <!-- asli khaana yahi hai (saveBill / nbAdvMode padhte hain); upar ke button isi ko badalte hain -->
+            <select id="nb-advmode" hidden onchange="nbAdvMode()"><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="CARD">Card</option><option value="SPLIT">Split (cash + UPI)</option></select>
+            <div id="nb-splitbox" hidden>
+              <label class="kb-label" for="nb-advupi">UPI part of the advance <small>(rest is cash)</small></label>
+              <label class="kb-money"><span>₹</span><input id="nb-advupi" type="number" min="0" step="1" inputmode="decimal" placeholder="0" oninput="calcBill()"></label>
+            </div>
+            <small class="kb-err" id="nb-adv-err"></small>
+            <label class="kb-label" for="nb-pnote">Payment note (optional)</label>
+            <input id="nb-pnote" type="text" maxlength="200" placeholder="e.g. UPI ref no., partial payment">
+            <div class="kb-due" id="nbw-duebox"><span>Remaining for this bill</span><b id="nb-due">₹0</b></div>
+          </div>
+          <div class="kb-card tint-wash">
+            <h3 class="kb-h">Delivery <small id="nbw-when"></small></h3>
+            <div class="kb-2">
+              <input id="nb-date" type="date" aria-label="Expected delivery date" onchange="calcBill()">
+              <select id="nb-time" aria-label="Expected time"><option value="">Any time</option></select>
+            </div>
+            <p class="kb-hint">Set from your turnaround days; Sundays and holidays are skipped, heavy items take longer, urgent brings it forward. Saving sends the receipt to the customer on WhatsApp and the work order to staff.</p>
+          </div></section>
+        </div>
+
+        <!-- Har screen par: ← Back · kul rakam · Next (kadam 3 par Save).
+             Phone par tab bar ke upar chipki, desktop par card ke neeche. -->
+        <div class="nbw-bar" id="nb-bar">
+          <button type="button" class="nbw-back" id="nb-back" data-nbw="back" aria-label="Back" hidden>‹<span> Back</span></button>
+          <div class="nbw-sum"><b id="nb-bar-total">₹0</b><span id="nb-bar-count">No items yet</span></div>
+          <button type="button" class="kb-btn ghost" id="nb-draft" onclick="nbDraftSave()" hidden>Save as draft</button>
+          <button type="button" class="kb-btn go nbw-next" id="nb-next" data-nbw="next">Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bill history -->
+    <!-- Scan station: garments.js bharta hai (scanner + work board) -->
+    <!-- Growth: growth.js bharta hai (actions + funnel + campaign ROI) -->
+    <section id="sec-growth" style="display:none">
+      <div class="pagehead"><div><h2>Growth</h2><p>Today's actions, enquiry funnel and campaign ROI — tracked facts, with definitions</p></div></div>
+      <div id="growth-root" class="growth-root"></div>
+    </section>
+
+    <section id="sec-scan" style="display:none">
+      <div class="pagehead"><div><h2>Scan station</h2><p>Scan a garment tag, move it to the next stage, watch the whole shop's work</p></div></div>
+      <div id="scan-root" class="scan-root"></div>
+    </section>
+
+    <section id="sec-bills" style="display:none">
+      <div class="pagehead"><div><h2>Bill history</h2><p>Every order, filterable</p></div>
+        <div class="actions"><button class="btn ghost" onclick="billsCsv()">⬇ CSV</button></div></div>
+      <div class="filters">
+        <input type="search" aria-label="Search bills" placeholder="Search…" oninput="billFilter.q=this.value;billFilter.page=1;renderBillsDeb()">
+        <select aria-label="Status filter" onchange="billFilter.status=this.value;reloadBills()">
+          <option value="">All statuses</option>
+          <option value="RECEIVED">New</option><option value="IN_WASH">Washing</option>
+          <option value="IN_IRON">Ironing</option><option value="READY">Ready</option>
+          <option value="OUT_FOR_DELIVERY">Out for delivery</option>
+          <option value="DELIVERED">Delivered</option><option value="CANCELLED">Cancelled</option>
+        </select>
+        <select aria-label="Payment filter" onchange="billFilter.pay=this.value;reloadBills()">
+          <option value="">All payments</option><option value="PAID">Paid</option>
+          <option value="PARTIAL">Partial</option><option value="UNPAID">Unpaid</option>
+        </select>
+        <input type="date" onchange="billFilter.from=this.value;reloadBills()" title="From date" aria-label="From date">
+        <input type="date" onchange="billFilter.to=this.value;reloadBills()" title="To date" aria-label="To date">
+      </div>
+      <div class="card listcard"><div id="bills-list"></div></div>
+      <div class="pager" id="bills-pager"></div>
+    </section>
+
+    <!-- Customers -->
+    <section id="sec-customers" style="display:none">
+      <div class="pagehead"><div><h2>Customers</h2><p>Who they are, what they owe, when they last came</p></div>
+        <div class="actions">
+          <button class="btn ghost" id="cust-select-btn" onclick="toggleCustSelectMode()">Select</button>
+          <button class="btn ghost" onclick="bulkImportModal()">📥 Import numbers</button>
+        </div></div>
+      <div class="grid kpis cust-kpis" id="cust-kpis"></div>
+      <div class="card cust-card">
+        <div class="doc-head">
+          <div class="chips cust-chips" id="cust-chips"></div>
+          <label class="searchbox"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-search"/></svg><input id="cust-search" type="search" aria-label="Search customers" placeholder="Search name or number…" oninput="custSearchDeb()"></label>
+        </div>
+        <div class="listcard" id="cust-list"></div>
+      </div>
+    </section>
+
+
+    <section id="sec-costing" style="display:none">
+      <div class="pagehead costing-head"><div><h2>AI Costing &amp; Profit Workbench</h2><p>Data-backed costing — estimates are separated from actuals.</p></div><div class="costing-controls"><select id="costing-period" aria-label="Analysis period"><option value="30d">Last 30 days</option><option value="90d" selected>Last 90 days</option></select><button class="btn" id="costing-refresh">Refresh data</button></div></div>
+      <div id="costing-error" class="costing-alert" hidden></div><div id="costing-loading" class="costing-empty">Loading verified business data…</div>
+      <div id="costing-content" hidden><div class="costing-alert info" id="costing-period-label"></div><div class="costing-kpis" id="costing-kpis"></div>
+        <div class="costing-grid">
+          <article class="card costing-card"><div class="costing-card-head"><div><h3>Phase 1 · Data readiness</h3><p>Check records before relying on estimates.</p></div><span class="costing-badge" id="costing-readiness-badge">Checking</span></div><div id="costing-readiness"></div><div class="costing-actions"><button class="btn ghost" onclick="go('expenses')">Record expenses</button><button class="btn ghost" onclick="go('settings')">Review rates</button></div></article>
+          <article class="card costing-card"><div class="costing-card-head"><div><h3>Expense breakdown</h3><p>Recorded expenses; not allocated per garment.</p></div></div><div id="costing-categories"></div></article>
+          <article class="card costing-card"><div class="costing-card-head"><div><h3>Monthly trend</h3><p>Expenses and delivered order counts.</p></div></div><div id="costing-monthly"></div></article>
+          <article class="card costing-card"><div class="costing-card-head"><div><h3>Rate-card coverage</h3><p>Configured costs compared with active rates.</p></div></div><div id="costing-rates"></div></article>
+        </div>
+        <article class="card costing-card costing-wide"><div class="costing-card-head"><div><h3>Phase 2 · Service &amp; garment costing</h3><p>Configured rate costs and recorded volumes — not audited net profit.</p></div></div><div class="costing-table-wrap"><table class="costing-table"><thead><tr><th>Service</th><th>Garment</th><th>Unit</th><th>Qty</th><th>Selling rate</th><th>Configured cost</th><th>Contribution*</th></tr></thead><tbody id="costing-rate-rows"></tbody></table></div><p class="costing-footnote">*Contribution excludes unallocated overhead and is not net profit.</p></article>
+        <!-- Kapde ki cost ek hi jagah: Settings → Pricing → Cost per garment (garment_cost.py).
+             AI wahan har kharche ki kism chhaantta hai (expense_ai.py); hisaab mehnat units se. -->
+        <article class="card costing-card costing-wide gc-link" id="garment-cost-link">
+          <span class="gc-link-ic" aria-hidden="true">🤖</span>
+          <div class="gc-link-body"><h3>Cost per garment · AI-sorted expenses</h3>
+            <p>AI reads every expense you record and charges it only to the clothes that use it, by the work each garment takes. The result fills "Configured cost" above.</p>
+            <div class="gc-link-chips"><span>🧴 Detergent → washed clothes</span><span>🧪 Solvent → dry clean</span><span>🛵 Petrol → pickup orders</span><span>🧾 New machine → 12 months</span><span>🚫 Home spending → left out</span></div></div>
+          <button type="button" class="btn orange" onclick="openGarmentCost()">Open cost per garment →</button>
+        </article>
+        <!-- Phase 3: Gemini dukaan ke apne numbers se agle 7 din ke kaam; har kaam ke saath
+             evidence. Ghade hue number wale sujhaav server hata deta hai (services/costing_ai.py). -->
+        <article class="card costing-card costing-wide" id="costing-ai-card"><div class="costing-card-head"><div><h3>Phase 3 · AI next actions</h3><p>AI reads only your recorded numbers and shows the data behind every suggestion. It never changes prices or sends messages.</p></div><div class="costing-ai-tools"><span class="costing-badge" id="costing-ai-badge">Rules</span><button type="button" class="btn ghost sm" id="costing-ai-refresh">↻ Ask AI again</button></div></div><p class="costing-ai-summary" id="costing-ai-summary" hidden></p><p class="costing-footnote" id="costing-ai-meta"></p><div id="costing-recommendations" class="costing-recommendations"></div></article>
+        <div class="costing-alert warning" id="costing-warning"></div>
+
+        <div class="costing-advisor-head"><div><h3>Business Advisor · Profit, Customers &amp; Expenses</h3><p>Read-only analysis of recorded business data. Suggestions never send messages or change prices.</p></div><span class="costing-badge">Owner only</span></div>
+        <div id="advisor-error" class="costing-alert warning" hidden></div>
+        <div id="advisor-content">
+          <div class="costing-kpis" id="advisor-finance-kpis"></div>
+          <div class="costing-grid">
+            <article class="card costing-card"><div class="costing-card-head"><div><h3>Customer repeat-order health</h3><p>Customers with delivered orders in this period.</p></div></div><div id="advisor-customer-stats"></div><p class="costing-footnote" id="advisor-customer-note"></p></article>
+            <article class="card costing-card"><div class="costing-card-head"><div><h3>Expense anomaly checks</h3><p>Flags only; verify receipts before taking action.</p></div></div><div id="advisor-anomalies"></div></article>
+          </div>
+          <article class="card costing-card costing-wide"><div class="costing-card-head"><div><h3>Per-service / garment contribution</h3><p>Rate-card cost includes a share of shop expenses; an estimate, not audited profit.</p></div></div><div class="costing-table-wrap"><table class="costing-table"><thead><tr><th>Service</th><th>Garment</th><th>Unit</th><th>Price</th><th>Configured cost</th><th>Contribution</th><th>Margin</th></tr></thead><tbody id="advisor-rate-rows"></tbody></table></div></article>
+          <article class="card costing-card costing-wide"><div class="costing-card-head"><div><h3>Next 7-day action plan</h3><p>Prioritized steps from the data, no automatic messaging or price changes.</p></div></div><div id="advisor-action-plan" class="costing-recommendations"></div></article>
+          <div class="costing-alert warning" id="advisor-finance-warning"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Expenses -->
+    <section id="sec-expenses" style="display:none">
+      <div class="pagehead"><div><h2>Expenses</h2><p>Daily spend and categories</p></div></div>
+      <!-- Mahine ka target: fixed kharche ka jod, roz kitna aaya / kitna laana hai (app.js: loadExpenseTarget) -->
+      <div id="exp-target"></div>
+      <div class="grid kpis" id="exp-kpis"></div>
+      <div class="card" style="margin-bottom:14px">
+        <b>Add expense</b>
+        <div class="expform">
+          <div class="ef-field">
+            <label for="exp-cat">Category
+              <a href="#" onclick="event.preventDefault();manageExpCats()" style="float:right;text-transform:none;letter-spacing:0;font-weight:600">+ New / manage</a></label>
+            <select id="exp-cat"></select>
+            <small class="fielderr" id="exp-cat-err"></small>
+          </div>
+          <div class="ef-field">
+            <label for="exp-amt">Amount</label>
+            <div class="rupee-input"><span class="rupee">₹</span>
+              <input id="exp-amt" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0" aria-label="Expense amount in rupees"></div>
+            <small class="fielderr" id="exp-amt-err"></small>
+          </div>
+          <div class="ef-field">
+            <label for="exp-date">Date</label>
+            <input id="exp-date" type="date" aria-label="Expense date">
+          </div>
+          <div class="ef-field ef-desc">
+            <label for="exp-desc">Description <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+            <input id="exp-desc" placeholder="e.g. detergent restock, van fuel" aria-label="Expense description">
+          </div>
+          <div class="ef-field ef-submit">
+            <button class="btn" onclick="saveExpense(this)">Save expense</button>
+          </div>
+        </div>
+      </div>
+      <div class="split2">
+        <div class="card"><b>Category breakdown</b><div id="exp-chart" style="margin-top:10px"></div></div>
+        <div class="card listcard"><div id="exp-list"></div></div>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section id="sec-reports" style="display:none">
+      <div class="pagehead"><div><h2>Reports</h2><p>Revenue, expenses and profit — real numbers only</p></div>
+        <div class="actions"><button class="btn ghost" onclick="loadReports()">↻ Refresh</button></div></div>
+      <div id="rep-body"></div>
+    </section>
+
+    <!-- Campaign Control Center -->
+    <section id="sec-campaigns" style="display:none">
+      <div class="camp-top">
+        <div class="camp-title">
+          <div class="camp-icon">📣</div>
+          <div><h2>Campaign Control Center</h2><p>Create, send and monitor WhatsApp campaigns from one place.</p></div>
+        </div>
+        <div class="camp-top-actions">
+          <button class="btn ghost" onclick="loadCampaigns()">↻ Refresh</button>
+          <button class="btn" onclick="resetCampaignForm()">＋ New campaign</button>
+        </div>
+      </div>
+      <!-- One job per tab: the page used to be a single 4,700px wall of
+           numbers, composer, history and lead tools. campTab() in app.js. -->
+      <div class="camp-tabs" role="tablist" aria-label="Campaign sections">
+        <button role="tab" data-camp-tab-btn="overview" onclick="campTab('overview')">Overview</button>
+        <button role="tab" data-camp-tab-btn="create" onclick="campTab('create')">New campaign</button>
+        <button role="tab" data-camp-tab-btn="leads" onclick="campTab('leads')">Leads</button>
+      </div>
+
+      <div class="camp-dashboard-card" data-camp-tab="overview">
+        <div class="camp-section-head">
+          <div><h3>Campaign dashboard</h3><p>Live numbers from campaign and recipient records.</p></div>
+          <button class="btn ghost sm" onclick="openFailedCampaignMessages()">⚠ Failed messages</button>
+        </div>
+        <div id="camp-kpis" class="camp-kpis"><div class="camp-skeleton"></div><div class="camp-skeleton"></div><div class="camp-skeleton"></div><div class="camp-skeleton"></div></div>
+        <div class="camp-status-grid" id="camp-status-grid"></div>
+        <div id="camp-running" class="camp-running"></div>
+      </div>
+
+      <div class="camp-live-grid" data-camp-tab="create">
+        <div class="camp-main-card">
+          <div class="camp-step"><span>1</span><div><b>Campaign Content</b><small>Message, image and campaign name.</small></div></div>
+          <fieldset class="camp-type-field"><legend>Campaign type *</legend><div class="camp-type-grid"><label class="camp-type-card"><input type="radio" name="camp-type" value="wish" onchange="campaignTypeChanged()"><span class="camp-type-text"><b>🎉 Wish / Greeting</b><small>Festival, birthday, thank-you. No offer, no frequency limit.</small></span></label><label class="camp-type-card selected"><input type="radio" name="camp-type" value="promotion" checked onchange="campaignTypeChanged()"><span class="camp-type-text"><b>📢 Promotion / Offer</b><small>Normal promotion rules and frequency limits apply.</small></span></label><label class="camp-type-card"><input type="radio" name="camp-type" value="payment_reminder" onchange="campaignTypeChanged()"><span class="camp-type-text"><b>💰 Payment reminder</b><small>Only customers with an outstanding balance.</small></span></label></div><small id="camp-type-help" class="muted">Promotion follows existing eligibility rules.</small></fieldset>
+          <div class="camp-field"><label for="camp-name">Campaign name <em>*</em></label><input id="camp-name" placeholder="October Freshness Offer" maxlength="120" oninput="updateCampaignPreview()"><small>Only used internally. Customers will not see this name.</small></div>
+          <div class="camp-field camp-ai-draft">
+            <label for="camp-ai-goal">AI campaign goal</label>
+            <div class="camp-template-row"><input id="camp-ai-goal" maxlength="120" value="increase repeat orders" placeholder="e.g. promote pickup convenience"><button type="button" class="btn ghost sm" id="camp-ai-draft-btn" onclick="generateCampaignDraft(this)">✨ Generate AI draft</button></div>
+            <small class="muted">AI suggests campaign copy, offer strategy, a branded phone-free poster and Google Business copy. It will not send anything; review the draft first.</small>
+            <p id="camp-ai-status" class="camp-inline-note" role="status"></p>
+          </div>
+          <div class="camp-field"><label for="camp-template">Use template</label><div class="camp-template-row"><select id="camp-template" onchange="applyCampaignTemplate(this.value)"><option value="">Choose template…</option><option value="festival">Festival wish</option><option value="offer">Offer</option><option value="payment">Payment reminder</option><option value="pickup">Pickup reminder</option><option value="referral">Referral</option></select><button type="button" class="btn ghost sm" onclick="saveCampaignTemplate()">Save current message as template</button></div></div>
+          <div class="camp-field"><label for="camp-msg">WhatsApp message <span class="muted">(optional with image)</span></label><div class="camp-format-toolbar"><button type="button" class="btn ghost sm" onclick="wrapCampaignSelection('*','*')">Bold</button><button type="button" class="btn ghost sm" onclick="wrapCampaignSelection('_','_')">Italic</button><button type="button" class="btn ghost sm" onclick="insertCampaignEmoji()">😊 Emoji</button><select id="camp-var" class="camp-var-select" aria-label="Insert customer variable" onchange="insertCampaignVariable(this)"><option value="">＋ Insert variable…</option></select></div><textarea id="camp-msg" rows="8" maxlength="4000" placeholder="Type your WhatsApp message…" oninput="updateCampaignMsgCount();updateCampaignPreview()"></textarea><div class="camp-count"><small>Variables like {name} are filled in for each customer.</small><small id="camp-msg-count">0/4000</small></div></div>
+          <div class="camp-field">
+            <label>Campaign image <span class="muted">(optional)</span></label>
+            <div class="camp-upload-row">
+              <label class="camp-drop" for="camp-image"><span class="camp-upload-icon">☁️</span><b>Upload campaign image</b><small>JPG, PNG or WEBP · max 8MB</small><span class="btn ghost sm">Choose image</span><input id="camp-image" type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadCampaignImage(this)"></label>
+              <div id="camp-image-preview" class="camp-image-preview"></div>
+            </div>
+          </div>
+          <div id="camp-ai-gmb-preview" class="camp-note" hidden>
+            <b>📍 Google Business draft (phone-free)</b>
+            <p><b>Title:</b> <span id="camp-ai-gmb-title"></span></p>
+            <p><b>Post:</b> <span id="camp-ai-gmb-body"></span></p>
+            <p><b>Button:</b> <span id="camp-ai-gmb-cta"></span></p>
+            <p><b>Offer strategy:</b> <span id="camp-ai-offer"></span></p>
+            <p><b>Why:</b> <span id="camp-ai-rationale"></span></p>
+          </div>
+          <details class="camp-rules-panel"><summary>Advanced: sending rules</summary><div class="camp-rule-list"><label><input type="checkbox" id="camp-rule-frequency" checked disabled> Respect frequency limit (required, greetings are exempt)</label><label><input type="checkbox" id="camp-rule-complaints" checked disabled> Skip customers with complaints (required)</label><label><input type="checkbox" id="camp-rule-blocked" checked disabled> Skip blocked / test numbers (required)</label><label><input type="checkbox" id="camp-rule-optout" disabled> Include opted-out customers (cannot override STOP / opt-out)</label></div><small class="muted">These rules are always on. Only a greeting skips the frequency limit. A customer gets a campaign only after messaging the shop on WhatsApp at least once.</small></details><div class="camp-note">🔒 One message every 30–60 seconds, and every recipient is tracked.</div>
+        </div>
+
+        <div class="camp-preview-card camp-live-preview">
+          <div class="camp-preview-head"><span>🟢</span><b>WhatsApp preview</b><small>Long messages scroll inside the chat area.</small></div>
+          <div class="camp-phone" aria-label="WhatsApp-style campaign preview">
+            <div class="camp-phone-speaker"></div>
+            <div class="camp-phone-head">
+              <span class="camp-wa-back">‹</span><span class="camp-wa-avatar">KK</span>
+              <span class="camp-wa-profile"><b>Kwik Klin</b><small><i></i>online</small></span><span class="camp-wa-actions">⌕ ⋮</span>
+            </div>
+            <div class="camp-phone-chat">
+              <div class="camp-chat-date">TODAY</div>
+              <div class="camp-bubble"><div id="camp-preview-image"></div><div id="camp-preview-text">Your campaign message will appear here…</div><small><span id="camp-preview-time">11:30 PM</span> <b>✓✓</b></small></div>
+            </div>
+            <div class="camp-phone-input"><span class="camp-composer-emoji">☺</span><span class="camp-composer-field">Type a message…</span><span>📎</span><span>🎙</span></div>
+          </div>
+          <div class="camp-good">✓ <b>Live preview</b><span>Image + message are previewed together.</span></div>
+        </div>
+      </div>
+
+      <div class="camp-bottom-grid" data-camp-tab="create">
+        <div class="camp-card">
+          <div class="camp-step"><span class="blue">2</span><div><b>Select Audience</b><small>Use an existing segment or choose exact customers.</small></div></div><div id="camp-audience-lock-note" class="camp-inline-note" hidden></div>
+          <div class="camp-audience-grid">
+            <button type="button" class="camp-audience active" data-segment="all_active" onclick="selectCampaignAudience('all_active')"><span>👥</span><b>All Eligible Customers</b><small>Every active customer who passes send-safety checks</small></button>
+            <button type="button" class="camp-audience" data-segment="active_regular" onclick="selectCampaignAudience('active_regular')"><span>👑</span><b>Regular Customers</b><small>Customers with 2+ orders</small></button>
+            <button type="button" class="camp-audience" data-segment="lapsed" onclick="selectCampaignAudience('lapsed')"><span>◷</span><b>Inactive Customers</b><small>No order for 60–120 days</small></button>
+            <button type="button" class="camp-audience" data-segment="normal_late" onclick="selectCampaignAudience('normal_late')"><span>⏳</span><b>Late vs usual rhythm</b><small>Later than 1.5× their own average gap</small></button>
+            <button type="button" class="camp-audience" data-segment="high_value" onclick="selectCampaignAudience('high_value')"><span>💎</span><b>High Value</b><small>Top-value customers</small></button>
+            <button type="button" class="camp-audience" data-segment="outstanding_dues" onclick="selectCampaignAudience('outstanding_dues')"><span>💰</span><b>Has dues</b><small>Customers with an outstanding balance</small></button>
+            <button type="button" class="camp-audience camp-audience-custom" data-segment="selected" onclick="selectCampaignAudience('selected')"><span>☑</span><b>Selected Customers</b><small>Choose exact recipients</small></button>
+            <button type="button" class="camp-audience" data-segment="active_orders" onclick="selectCampaignAudience('active_orders')"><span>🧺</span><b>Customers with active orders</b><small>An order is in progress now. Marketing rules still apply</small></button>
+          </div>
+          <select id="camp-seg" style="display:none"></select>
+          <div id="camp-selected-picker" class="camp-selected-picker" hidden>
+            <div class="camp-picker-head"><div><b>Selected customers</b><small>Use the real customer database. No duplicate records are created.</small></div><span id="camp-selected-count">0 selected</span></div>
+            <button type="button" class="btn" style="width:100%;margin-top:10px" onclick="openCampaignCustomerPicker()">👥 Select customers</button>
+            <div id="camp-selected-list" class="camp-selected-list"></div>
+          </div>
+          <div class="camp-audience-meta"><span id="camp-audience-count">Loading audience…</span><span>Opt-outs, complaints, frequency limits, blocked numbers and customers who never messaged the shop are skipped</span></div>
+        </div>
+
+        <div class="camp-card">
+          <div class="camp-section-head"><div><h3>Campaign summary</h3><p>Review the selected content and audience.</p></div></div>
+          <div class="camp-summary"><div><span>Name</span><b id="camp-summary-name">—</b></div><div><span>Audience</span><b id="camp-summary-audience">All Customers</b></div><div><span>Image</span><b id="camp-summary-image">No image</b></div><div><span>Start</span><b id="camp-summary-start">Send now</b></div><div><span id="camp-summary-count-label">Recipients</span><b id="camp-summary-count">—</b></div></div>
+        </div>
+      </div>
+
+      <div class="camp-send-block" data-camp-tab="create">
+      <div class="camp-review-card">
+        <div class="camp-step"><span class="blue">3</span><div><b>Review &amp; Send</b><small>Check audience and rules before sending.</small></div></div>
+        <div class="camp-review-grid">
+          <div><h4>Recipient breakdown</h4><div id="camp-recipient-breakdown" class="camp-breakdown"></div><button type="button" class="btn ghost sm" onclick="previewCampaignRecipients()">👀 Preview recipients</button><div id="camp-recipient-preview" class="camp-recipient-preview" hidden></div></div>
+          <div><h4>Schedule</h4><div class="camp-schedule">
+            <label class="camp-schedule-option"><input type="radio" name="camp-send-mode" value="now" checked onchange="toggleCampaignSchedule()"> Send now</label>
+            <label class="camp-schedule-option"><input type="radio" name="camp-send-mode" value="later" onchange="toggleCampaignSchedule()"> Schedule for later</label>
+            <input type="datetime-local" id="camp-scheduled-at" aria-label="Scheduled date and time" onchange="updateCampaignPreview()" hidden>
+          </div><small id="camp-send-estimate" class="muted"></small></div>
+        </div>
+        <div class="camp-send-row"><button class="camp-start" id="camp-start-btn" onclick="createCampaign(this)"><span>➤ Review &amp; Send</span><small>Automatic sending · 30–60 sec gap · opt-outs always skipped</small></button><button type="button" class="btn ghost" id="camp-test-send-btn" onclick="testCampaignSend(this)">📱 Test send to my number</button></div>
+        <p id="camp-send-validation" class="camp-inline-note" role="status" aria-live="polite" data-state="warn">Add a campaign name, message or image, and an audience.</p>
+      </div>
+      </div>
+
+      <div id="camp-history" class="camp-history" data-camp-tab="overview">
+        <div class="camp-section-head"><div><h3>Campaign History</h3><p>Open a campaign for detailed recipient tracking.</p></div></div><div class="camp-history-filters"><select id="camp-history-filter" onchange="filterCampaignHistory()"><option value="all">All</option><option value="sending">Running</option><option value="sent">Completed</option><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="cancelled">Cancelled</option></select><input id="camp-history-search" type="search" placeholder="Search campaign name…" oninput="filterCampaignHistory()"></div>
+        <div id="camp-list"><div class="camp-skeleton" aria-hidden="true"></div><div class="camp-skeleton" aria-hidden="true"></div></div>
+      </div>
+      <div id="seg-cards" style="display:none"></div>
+      <div class="camp-lead-panel" data-camp-tab="leads">      <div id="manual-lead-handoff" class="camp-dashboard-card" style="margin-bottom:14px">
+        <div class="camp-section-head">
+          <div><h3>📞 Phone-call lead → WhatsApp handoff</h3><p>Save the call details, review a message, and send only after the customer has agreed. The existing AI agent handles replies.</p></div>
+          <button class="btn ghost sm" onclick="loadManualLeads()">↻ Refresh leads</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px">
+          <div class="camp-field"><label for="manual-lead-name">Customer name *</label><input id="manual-lead-name" maxlength="120" placeholder="Customer name" oninput="updateLeadContext()"></div>
+          <div class="camp-field"><label for="manual-lead-phone">WhatsApp number *</label><input id="manual-lead-phone" inputmode="tel" maxlength="24" placeholder="+91 98765 43210" oninput="updateLeadContext()"></div>
+          <div class="camp-field"><label for="manual-lead-need">Interested service *</label><input id="manual-lead-need" maxlength="300" placeholder="Dry cleaning, bulk laundry…" oninput="updateLeadContext()"></div>
+        </div>
+        <div class="camp-lead-context" aria-live="polite"><h4>Lead context</h4><div id="manual-lead-context-summary">Enter lead details to preview the recipient.</div><div class="camp-lead-status-row"><span>Source: Phone call</span><span>Status: New lead</span><span>Last contact: Not available</span></div><div class="camp-lead-timeline"><b>Conversation history</b><p>No previous WhatsApp messages are available for this new lead.</p></div></div>
+        <div class="camp-field" style="margin-top:8px"><label for="manual-lead-notes">Call notes</label><textarea id="manual-lead-notes" rows="2" maxlength="2000" placeholder="Budget, pickup area, preferred date, questions…"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;margin:8px 0"><button type="button" class="btn ghost sm" onclick="draftManualLeadMessage()">✍ Prepare WhatsApp draft</button></div>
+        <div class="camp-field"><label for="manual-lead-template">Saved message template</label><select id="manual-lead-template" onchange="applyLeadTemplate(this.value)"><option value="">Choose a template…</option><option value="welcome">Welcome / follow-up</option><option value="offer">Service offer</option><option value="payment">Payment reminder</option></select></div><div class="camp-field"><label for="manual-lead-message">WhatsApp message (review/edit before sending)</label><div class="camp-format-toolbar"><button type="button" class="btn ghost sm" onclick="wrapLeadSelection('*','*')">Bold</button><button type="button" class="btn ghost sm" onclick="wrapLeadSelection('_','_')">Italic</button><button type="button" class="btn ghost sm" onclick="insertLeadEmoji()">😊 Emoji</button></div><textarea id="manual-lead-message" rows="4" maxlength="1200" placeholder="Prepare a draft, then review it here…" oninput="updateLeadMessagePreview()"></textarea><div class="camp-count"><small>Preview uses entered lead details.</small><small id="manual-lead-message-count">0/1200</small></div><div id="manual-lead-message-preview" class="camp-lead-preview" aria-live="polite">Your reviewed WhatsApp message will appear here.</div></div>
+        <label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0;font-size:12px"><input id="manual-lead-consent" type="checkbox" style="margin-top:2px;flex:0 0 auto"><span>Customer explicitly agreed to receive WhatsApp follow-up. Required to send the message.</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button type="button" class="btn ghost" onclick="submitManualLead(false)">Save lead only</button>
+          <button type="button" class="btn" onclick="submitManualLead(true)">Save &amp; send WhatsApp</button>
+        </div>
+        <div id="manual-lead-status" role="status" style="margin-top:10px;font-size:12px"></div>
+        <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:12px">
+          <div class="camp-section-head"><div><h3>Recent manual leads</h3><p>Stage and next follow-up from the lead pipeline.</p></div></div>
+          <div id="manual-lead-list"><div class="camp-skeleton"></div></div>
+        </div>
+      </div>
+</div>
+
+    </section>
+
+    <!-- Agents control room -->
+    <section id="sec-agents" style="display:none">
+      <div class="pagehead"><div><h2>Agents</h2><p>Your two AI employees — health, workload and controls in one place</p></div>
+        <div class="actions"><button class="btn ghost" onclick="loadAgents()">↻ Refresh</button></div></div>
+      <div id="agents-body"></div>
+    </section>
+
+    <!-- AI training -->
+    <section id="sec-training" style="display:none">
+      <div class="pagehead"><div><h2>AI training</h2><p>Teach the assistant how your shop talks — changes go live immediately</p></div></div>
+
+      <div class="card tr-hero">
+        <div class="tr-hero-l">
+          <span class="sec-ico"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-agent"/></svg></span>
+          <div><h3>WhatsApp assistant</h3><p class="muted">Replies to customers on its own. Turn off to answer everything yourself.</p>
+            <p class="muted tr-takeover"><label for="tr-takeover-h">After you reply yourself (shop phone or Inbox), it stays quiet on that chat for</label>
+              <input id="tr-takeover-h" type="number" min="0" max="72" step="1" inputmode="numeric"> hours. Press ▶ Bot in the chat to bring it back sooner.</p></div>
+        </div>
+        <label class="switch big"><input type="checkbox" id="agent-toggle"><i></i><span>Replies to customers</span></label>
+      </div>
+
+      <div class="card tr-card">
+        <div class="sec-h"><span class="sec-ico"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-training"/></svg></span><div><h3>Instructions</h3><p class="muted">Short, plain rules. They are added to every reply.</p></div></div>
+        <div class="tr-grid">
+          <div class="tr-field"><label for="tr-cust-inst">Customer replies</label>
+            <textarea id="tr-cust-inst" rows="4" placeholder="e.g. Always mention we pick up and deliver free within 3 km."></textarea></div>
+          <div class="tr-field"><label for="tr-staff-inst">Staff &amp; owner commands</label>
+            <textarea id="tr-staff-inst" rows="4" placeholder="e.g. Always confirm the delivery date when creating bills."></textarea></div>
+          <div class="tr-field tr-wide"><label for="tr-mkt-inst">Campaign message style</label>
+            <textarea id="tr-mkt-inst" rows="3" placeholder="e.g. Always address customers respectfully, mention festivals, keep messages short."></textarea></div>
+        </div>
+        <div class="tr-foot">
+          <p class="tr-lock">🔒 Locked rules always win: no invented prices, no other customer's data, no unapproved discounts, no promises the records don't support.</p>
+          <button class="btn" onclick="saveAgentSettings(this)">Save instructions</button>
+        </div>
+      </div>
+
+      <div class="card tr-card">
+        <div class="sec-h"><span class="sec-ico amber"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-inbox"/></svg></span><div><h3>Teach me <span class="cnt-badge" id="teach-count">0</span></h3><p class="muted">Questions the assistant could not answer. Reply once and it learns.</p></div></div>
+        <div id="teach-list"></div>
+      </div>
+
+      <div class="card tr-card">
+        <div class="sec-h"><span class="sec-ico blue"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-ledger"/></svg></span><div><h3>Documents</h3><p class="muted">Price lists, policies, brochures — the assistant reads the matching part when it answers. Same file name replaces the old one.</p></div></div>
+        <label class="tr-drop">
+          <input type="file" accept=".pdf,.txt,.csv,.md" onchange="uploadDoc(this)" aria-label="Upload a document">
+          <b>⬆ Upload a PDF, TXT or CSV</b><span id="doc-status" class="muted">Tap to choose a file</span>
+        </label>
+        <div id="doc-list"></div>
+      </div>
+
+      <div class="split2 tr-pair">
+        <div class="card tr-card">
+          <div class="sec-h"><span class="sec-ico green"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-task"/></svg></span><div><h3>Knowledge (FAQ)</h3><p class="muted">Facts the assistant can quote.</p></div></div>
+          <div class="frm">
+            <input id="faq-q" placeholder="Question — e.g. What are your timings?" aria-label="FAQ question">
+            <textarea id="faq-a" rows="2" placeholder="Answer — e.g. 9am to 9pm, all days" aria-label="FAQ answer"></textarea>
+            <div class="tr-row"><select id="faq-aud" aria-label="FAQ audience"><option value="customer">For customers</option><option value="staff">For staff</option><option value="all">Everyone</option></select>
+            <button class="btn" onclick="addFaq(this)">Add</button></div>
+          </div>
+          <div id="faq-list"></div>
+        </div>
+        <div class="card tr-card">
+          <div class="sec-h"><span class="sec-ico"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-activity"/></svg></span><div><h3>Corrections</h3><p class="muted">“When asked X, reply like Y.”</p></div></div>
+          <div class="frm">
+            <input id="corr-q" placeholder="When a customer asks…" aria-label="When a customer asks">
+            <textarea id="corr-a" rows="2" placeholder="The reply should be…" aria-label="The reply should be"></textarea>
+            <div class="tr-row"><span></span><button class="btn" onclick="addCorr(this)">Add</button></div>
+          </div>
+          <div id="corr-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Business Manager: read-only operational priorities based on existing dashboard data -->
+    <section id="sec-business" style="display:none">
+      <div class="pagehead">
+        <div><h2>Business Manager</h2><p>Daily priorities from your live orders and payment records — recommendations only, no automatic messages or changes.</p></div>
+        <div class="actions"><button class="btn ghost" onclick="loadBusinessManager()">↻ Refresh</button></div>
+      </div>
+      <div class="grid kpis" id="business-kpis"></div>
+      <div class="split2" style="margin-top:14px">
+        <div class="card">
+          <b>Needs attention</b>
+          <p class="muted" style="margin:4px 0 10px">Orders marked late by the existing delivery tracker.</p>
+          <div id="business-delayed"></div>
+        </div>
+        <div class="card">
+          <b>Collect payment</b>
+          <p class="muted" style="margin:4px 0 10px">Delivered orders with an outstanding balance.</p>
+          <div id="business-dues"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <b>✅ Suggested next steps</b>
+        <div id="business-actions" style="margin-top:8px"></div>
+      </div>
+      <p class="muted" style="margin-top:10px">Deterministic, built from existing records; it does not call an LLM, send WhatsApp messages, assign staff, or modify orders. Complaints close when you resolve them here, or automatically when you reply to that customer from the Inbox or the shop phone.</p>
+    </section>
+
+    <!-- AI usage -->
+    <section id="sec-usage" style="display:none">
+      <div class="pagehead"><div><h2>AI usage</h2><p>How much AI was used, what it cost — and the monthly run rate</p></div>
+        <div class="actions"><button class="btn ghost" onclick="loadUsage()">↻ Refresh</button></div>
+      </div>
+      <div class="chips" id="usage-range" role="group" aria-label="Period" style="margin-bottom:12px"></div>
+      <div id="usage-budget-alert" aria-live="polite" style="margin-bottom:14px"></div>
+      <div class="grid kpis" id="usage-kpis"></div>
+      <div class="split2">
+        <div class="card"><b id="usage-chart-title">Daily usage (30 days)</b><div id="usage-chart" style="margin-top:10px"></div></div>
+        <div class="card"><b>By purpose</b><div id="usage-purpose" style="margin-top:10px"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><b>By model</b><div id="usage-models" style="margin-top:10px"></div></div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>Paid AI cost simulator</b><p class="muted" style="margin:4px 0 0">
+            Current free-model token usage ko paid model ki USD rate par calculate karo. Result INR mein milega, har usage date ke USD/INR historical rate ke basis par.
+          </p></div>
+        </div>
+        <div class="split2" style="margin-top:12px">
+          <div>
+            <label>Input price (USD / 1M tokens)</label>
+            <input id="usage-sim-in" type="number" min="0" step="0.0001" value="0.05" inputmode="decimal">
+          </div>
+          <div>
+            <label>Output price (USD / 1M tokens)</label>
+            <input id="usage-sim-out" type="number" min="0" step="0.0001" value="0.20" inputmode="decimal">
+          </div>
+        </div>
+        <div class="filters" style="margin-top:10px">
+          <button class="btn sm" type="button" onclick="calcUsageSimulator()">Calculate</button>
+          <button class="btn ghost sm" type="button" onclick="setUsageSimNemotron()">Nemotron paid ($0.05 / $0.20)</button>
+        </div>
+        <div id="usage-simulator" style="margin-top:12px"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>AI cost attribution</b><p class="muted" style="margin:4px 0 0">
+            Order-level cost is shown only when the customer had exactly one active order; ambiguous cases stay at customer level.
+            Failed attempts are counted separately and do not add token cost unless the provider returned tokens.
+          </p></div>
+        </div>
+        <div id="usage-attribution" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- Tasks -->
+    <section id="sec-tasks" style="display:none">
+      <div class="pagehead"><div><h2>Work Control Room</h2><p>Pending, stuck aur unassigned kaam — manager yahin se team ko control karega</p></div>
+        <div class="actions">
+          <button class="btn ghost" onclick="pingAllTasks(this)">⏰ Ping everyone now</button>
+          <button class="btn" onclick="newTaskModal()">➕ New task</button>
+        </div>
+      </div>
+      <div class="grid kpis" id="task-kpis"></div>
+      <div class="chips" id="task-chips"></div>
+      <div class="card"><div id="task-list"></div></div>
+    </section>
+
+    <!-- Activity -->
+    <section id="sec-activity" style="display:none">
+      <div class="pagehead"><div><h2>Activity</h2><p>Every message, tool call and escalation — what the agent did, and why</p></div>
+        <div class="actions">
+          <select id="act-role" aria-label="Role filter" onchange="loadActivity()">
+            <option value="">All roles</option><option value="admin">Admin</option>
+            <option value="staff">Staff</option><option value="customer">Customer</option>
+            <option value="system">System</option>
+          </select>
+          <button class="btn ghost" onclick="loadActivity()">↻ Refresh</button>
+        </div></div>
+      <div id="act-list"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="sec-settings" style="display:none">
+      <div class="pagehead"><div><h2>Settings</h2><p>Business profile, pricing, messages and agent behaviour</p></div></div>
+      <div id="set-plan-ring"></div>
+      <div class="chips set-tabs" role="tablist" aria-label="Settings sections">
+        <span class="chip on" data-st="profile" onclick="stTab('profile')">🏪 Business Profile & Invoices</span>
+        <span class="chip" data-st="pricing" onclick="stTab('pricing')">Pricing rates matrix</span>
+        <span class="chip" data-st="messages" onclick="stTab('messages')">✉️ Message formats</span>
+        <span class="chip" data-st="ops" onclick="stTab('ops')">⚙️ Operations & Agents</span>
+        <span class="chip" data-st="rewards" onclick="stTab('rewards')">🎁 Rewards</span>
+      </div>
+
+      <div id="st-profile">
+        <div class="card" style="margin-bottom:14px">
+          <b>🏪 Business profile</b>
+          <div class="split2" style="margin-top:10px">
+            <div><label>Business name</label><input id="bp-name" disabled title="Set via .env SHOP_NAME"></div>
+            <div><label>GST identification number (GSTIN)</label><input id="bp-gstin" placeholder="09AAAAA0000A1Z5"></div>
+            <div><label>Contact phone number</label><input id="bp-phone" type="tel" inputmode="numeric" placeholder="9696856069"></div>
+            <div><label>Default delivery boy</label><select id="set-delivery"></select></div>
+          </div>
+          <div style="margin-top:10px"><label>Shop timings (the bot tells customers this)</label>
+            <input id="bp-hours" placeholder="11 am to 6 pm, closed on Sundays"></div>
+          <div style="margin-top:10px"><label>Physical shop address (prints on receipts)</label>
+            <textarea id="bp-address" rows="2" placeholder="Shop no., road, Varanasi"></textarea></div>
+          <div class="split2" style="margin-top:10px">
+            <div><label>UPI VPA ID (scan-to-pay on bills)</label><input id="bp-upi" placeholder="yourname@okaxis"></div>
+            <div><label>UPI payee name</label><input id="bp-payee" placeholder="Kwik Klin"></div>
+          </div>
+          <div class="split2" style="margin-top:10px">
+            <div><label>Google review link</label>
+              <input id="bp-review" type="url" placeholder="https://search.google.com/local/writereview?placeid=…"></div>
+            <div><label>Second listing review link <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+              <input id="bp-review2" type="url" placeholder="https://g.page/r/…/review"></div>
+          </div>
+          <small class="muted" id="bp-review-short"></small>
+          <div style="margin-top:10px"><label>Customer order link</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input id="bp-orderlink" readonly style="flex:1 1 260px" placeholder="Loading…">
+              <button type="button" class="btn sm" id="bp-orderlink-copy">Copy</button>
+              <a class="btn sm ghost" id="bp-orderlink-open" href="#" target="_blank" rel="noopener">Open</a>
+            </div>
+            <small class="muted">Share this anywhere — customers pick clothes from your rate list, add a coupon and book a pickup. The order is confirmed from their own WhatsApp number.</small>
+          </div>
+          <div style="margin-top:10px"><label>Invoice footer banner message</label>
+            <input id="bp-footer" placeholder="Thank you for choosing Kwik Klin!"></div>
+          <div style="margin-top:10px"><label>Terms &amp; conditions on bills <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(one per line · leave empty for none)</span></label>
+            <textarea id="bp-terms" rows="6" placeholder="Check clothes at delivery. Complaints within 24 hours."></textarea>
+            <small class="muted">Kg bills also get: “Kg services: the clothes count at drop-off is final.”</small></div>
+          <div style="margin-top:10px"><label>Shop logo (bills &amp; printed receipts)</label>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <span id="bp-logo-preview" class="muted">No logo yet</span>
+              <input type="file" id="bp-logo-file" accept="image/jpeg,image/png,image/webp" hidden>
+              <button type="button" class="btn sm" onclick="document.getElementById('bp-logo-file').click()">Upload logo</button>
+              <button type="button" class="btn sm ghost" id="bp-logo-remove" hidden onclick="removeShopLogo(this)">Remove</button>
+            </div>
+            <small class="muted">Square image works best. It appears on the customer's bill page and on top of printed receipts.</small></div>
+          <div style="margin-top:10px"><label for="bp-paper">Bill printer paper width</label>
+            <select id="bp-paper" style="max-width:260px">
+              <option value="58">58 mm — small Bluetooth printer</option>
+              <option value="80">80 mm — counter printer</option>
+            </select></div>
+          <div class="filters" style="margin-top:10px">
+            <div><label>Standard GST (%)</label><input inputmode="decimal" id="bp-gstpct" type="number" min="0" max="28" style="width:90px"></div>
+            <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;margin-top:14px">
+              <input type="checkbox" id="bp-gstdef"> Enable GST by default on new bills</label>
+          </div>
+          <button class="btn" style="margin-top:12px" onclick="saveProfile(this)">Save profile configurations</button>
+        </div>
+
+        <div class="card" style="margin-bottom:14px" id="waha-connection-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <b>📱 WhatsApp Connection</b>
+              <p class="muted" style="margin:5px 0 0">Connect the Kwik Klin WhatsApp number using WAHA / NOWEB.</p>
+            </div>
+            <button class="btn ghost sm" onclick="loadWahaConnection()">↻ Refresh</button>
+          </div>
+          <div id="waha-connection-body" style="margin-top:12px"><span class="muted">Checking WhatsApp connection…</span></div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <b>⭐ Google reviews on your website</b>
+          <p class="muted" style="margin:6px 0 10px">Once the Kwik Klin team connects your Business Profile,
+            all your Google reviews — name, stars, text and your replies — show on your website and refresh every 6 hours.</p>
+          <div id="gbp-body" class="muted">Loading…</div>
+        </div>
+        <div class="card">
+          <b>🏷️ Discount offers setup</b>
+          <div class="filters" style="margin-top:10px">
+            <input id="dp-name" placeholder="Offer name (e.g. Welcome 10% Off)" aria-label="Offer name" style="min-width:190px">
+            <select id="dp-type" aria-label="Discount type" style="min-width:120px"><option value="percent">Percentage (%)</option><option value="flat">Flat ₹</option></select>
+            <input inputmode="decimal" id="dp-val" type="number" min="1" placeholder="Value" aria-label="Discount value" style="width:90px">
+            <button class="btn sm orange" onclick="addPreset(this)">+ Add offer</button>
+          </div>
+          <div id="dp-list" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div id="st-pricing" style="display:none">
+        <div class="card" style="margin-bottom:14px">
+          <b>Piece-based pricing rate matrix</b>
+          <p class="muted" style="margin-top:4px">Every garment's rate for every service — type in a cell, it saves automatically. New bills use these rates, never old ones.</p>
+          <div class="filters" style="margin-top:8px">
+            <input id="rm-garment" placeholder="New garment name" aria-label="New garment name" style="min-width:150px">
+            <button class="btn sm orange" onclick="rmAddGarment()">+ Add item</button>
+            <input id="rm-service" placeholder="New service name" aria-label="New service name" style="min-width:150px">
+            <span class="rm-newstages" role="group" aria-label="Stages for the new service">
+              <label><input type="checkbox" id="rm-st-IN_WASH" checked> Wash</label>
+              <label><input type="checkbox" id="rm-st-IN_IRON" checked> Iron</label>
+            </span>
+            <button class="btn sm ghost" onclick="rmAddService()">+ Add service</button>
+            <!-- industry ke aam kapde (kk-bill.js GARMENTS): daam bharo to New Bill mein -->
+            <button class="btn sm ghost" id="rm-std-btn" onclick="rmToggleStd()">📋 Industry garment list</button>
+          </div>
+          <div id="rate-matrix" style="margin-top:10px;overflow-x:auto"></div>
+        </div>
+        <div class="card"><b>⚖️ Weight-based (per kg) rates</b><div id="rate-kg" style="margin-top:10px"></div></div>
+        <!-- 📊 Per-garment cost: industry ka weighted-unit tareeka (services/garment_cost.py).
+             Cost kabhi haath se nahi bharti — sirf effort units badalte hain. -->
+        <div class="card" id="cost-garment-card" style="margin-top:14px">
+          <b>📊 Cost per garment</b>
+          <p class="muted" style="margin-top:4px">How the industry does it: this period's expenses ÷ the effort units of everything you billed = cost per unit. Each item's cost = unit cost × its effort units (1 = one shirt, wash &amp; iron; a silk saree dry-cleaned is about 5). Keep Expenses up to date, adjust the effort units, then apply. After your first apply, costs refresh by themselves on the 1st of every month (last 90 days) and you get a WhatsApp note with what changed. Apply saves the costs and puts the suggested rates on your rate card. Nobody — staff, manager or you — can bill below the lowest rate (cost + minimum profit); they see why.</p>
+          <div class="filters" style="margin-top:8px">
+            <select id="cst-days" aria-label="Period" onchange="costingLoad()">
+              <option value="30">Last 30 days</option><option value="60">Last 60 days</option><option value="90" selected>Last 90 days</option>
+              <option value="m:this">This month</option><option value="m:last">Last month</option>
+            </select>
+            <button class="btn sm ghost" onclick="costingLoad()">↻ Recalculate</button>
+            <label class="cst-target">Net profit target <input inputmode="numeric" id="cst-target" type="number" min="0" max="90" step="1" value="20" aria-label="Net profit target percent" onchange="costingTarget(this.value)">%</label>
+            <label class="cst-target" title="Below cost + this profit nobody can bill or set a rate">Minimum profit <input inputmode="numeric" id="cst-min" type="number" min="0" max="90" step="1" value="10" aria-label="Minimum profit percent" onchange="costingMinMargin(this.value)">%</label>
+            <button class="btn sm ghost" id="cst-raise" onclick="costingRaise(this)" hidden>⬆ Raise rates to target</button>
+            <button class="btn sm ghost" id="cst-measured" onclick="costingUseMeasured(this)" hidden>📏 Use measured effort</button>
+            <button class="btn sm orange" id="cst-apply" onclick="costingApply(this)" disabled>Apply costs &amp; rates</button>
+            <button class="btn sm ghost" id="cst-undo" onclick="costingUndo(this)" hidden>↶ Undo last apply</button>
+            <button class="btn sm ghost" id="cst-restore" onclick="costingRestore(this)" hidden>↺ Old rates from past bills</button>
+            <button class="btn sm ghost" id="cst-clear" onclick="costingClear(this)">Clear saved costs</button>
+          </div>
+          <div id="rate-costing" style="margin-top:10px;overflow-x:auto"></div>
+        </div>
+      </div>
+
+      <div id="st-rewards" style="display:none">
+        <div class="card" style="margin-bottom:14px">
+          <b>🎁 Loyalty rewards</b>
+          <p class="muted" style="margin-top:4px">A rule is checked on every new bill. When a customer qualifies they get a one-time coupon (WhatsApp message goes automatically when the API is connected), it shows on their bill page, and it applies with one tap on their next bill. You can cancel any reward below.</p>
+          <div id="rw-rules" style="margin-top:10px"></div>
+          <div id="rw-suggest" style="margin-top:8px"></div>
+          <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">＋ Add a custom rule</summary>
+            <div class="filters" style="margin-top:8px">
+              <input id="rw-name" placeholder="Rule name" aria-label="Rule name" style="min-width:150px">
+              <select id="rw-kind" aria-label="Condition"><option value="bills">N bills in window</option><option value="spend">₹ spent in window</option></select>
+              <input inputmode="decimal" id="rw-threshold" type="number" min="1" placeholder="3 or 3000" aria-label="Threshold" style="width:110px">
+              <input inputmode="decimal" id="rw-window" type="number" min="1" value="30" placeholder="days" aria-label="Window days" style="width:90px">
+              <select id="rw-type" aria-label="Reward type"><option value="flat">₹ off</option><option value="percent">% off</option></select>
+              <input inputmode="decimal" id="rw-value" type="number" min="1" placeholder="100 or 10" aria-label="Reward value" style="width:100px">
+              <input inputmode="decimal" id="rw-cap" type="number" min="1" placeholder="max ₹ (for %)" aria-label="Max discount" style="width:120px">
+              <input inputmode="decimal" id="rw-min" type="number" min="0" placeholder="min bill ₹" aria-label="Minimum order" style="width:110px">
+              <input inputmode="decimal" id="rw-valid" type="number" min="1" value="30" placeholder="valid days" aria-label="Valid days" style="width:100px">
+              <button class="btn sm orange" onclick="rwAdd()">Add rule</button>
+            </div>
+          </details>
+        </div>
+        <div class="card"><b>Rewards given</b><p class="muted" style="margin-top:4px">Earned = waiting to be used. Cancel disables the coupon.</p><div id="rw-earned" style="margin-top:10px"></div></div>
+      </div>
+      <div id="st-ops" style="display:none">
+      <!-- garments.js bharta hai: switch badalte hi save (PUT /admin/api/settings) -->
+      <div class="card gt-card gt-off" id="gt-card">
+        <div class="gt-head"><b>🏷️ Garment tags, scanner &amp; QC</b><span class="gt-plan">Premium &amp; Business</span></div>
+        <p class="muted gt-sub">Choose which steps your shop uses. Switched off, these steps don't appear anywhere — not after billing, not in the menu, not in the staff app.</p>
+        <div class="gt-row">
+          <div><b>Garment tags &amp; scanner</b>
+            <small>Every new bill gets one barcode tag per piece (one per kg bag). Adds label printing after Save, the Scan station, and a scan button in the staff app.</small></div>
+          <label class="switch"><input type="checkbox" id="gt-on" data-kk="gt-toggle" data-key="garment_tags_enabled" aria-label="Garment tags and scanner"><i></i></label>
+        </div>
+        <div class="gt-row gt-sub-row">
+          <div><b>QC (quality check) step</b>
+            <small>Garments must pass QC before they can be packed. Off: Iron goes straight to Packed.</small></div>
+          <label class="switch"><input type="checkbox" id="gt-qc" data-kk="gt-toggle" data-key="garment_qc_enabled" aria-label="QC step"><i></i></label>
+        </div>
+        <div class="gt-lock" id="gt-lock" hidden>🔒 Your plan doesn't include garment tags. <button type="button" class="btn sm" data-kk="upgrade">See plans</button></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <b>🏪 Daily operations</b>
+        <div class="setgrid">
+          <div class="setfield">
+            <label for="set-standup">Standup hour (IST)</label>
+            <input inputmode="decimal" id="set-standup" type="number" min="0" max="23">
+            <small>Bot sends you a summary of pending orders at this time each day.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-turnaround">Turnaround (days)</label>
+            <input inputmode="decimal" id="set-turnaround" type="number" min="1" max="14">
+            <small>Days you promise for delivery when you take a normal order.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-washer">Default washer</label>
+            <select id="set-washer"></select>
+            <small>New orders go to this person unless you assign someone else.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-urg-type">⚡ Urgent charge</label>
+            <div style="display:flex;gap:8px">
+              <select id="set-urg-type" style="max-width:150px">
+                <option value="percent">% of items</option>
+                <option value="flat">₹ fixed</option>
+              </select>
+              <input inputmode="numeric" id="set-urg-value" type="number" min="0" step="1" style="max-width:100px">
+            </div>
+            <small>Filled in when a bill is marked Urgent — can be changed or waived on each bill. 0 = no charge.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-urg-days">⚡ Urgent delivery (days)</label>
+            <input inputmode="decimal" id="set-urg-days" type="number" min="0" max="14">
+            <small>0 = same day, 1 = next day. Urgent bills get this delivery date.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-route">Customer address &amp; Route in staff panel</label>
+            <select id="set-route">
+              <option value="false">Off — hide address and Route button</option>
+              <option value="true">On — show address and open Google Maps</option>
+            </select>
+            <small>Uses the address typed on the customer. Keep off until addresses are reliable.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-autoassign">Agent assigns work automatically</label>
+            <select id="set-autoassign">
+              <option value="true">On — every bill gets washer + pickup/delivery tasks</option>
+              <option value="false">Off — only the default washer gets a WhatsApp</option>
+            </select>
+            <small>The agent picks the staff member with the fewest open tasks, closes tasks as the order moves, and hands work from inactive staff to someone else.</small>
+          </div>
+        </div>
+        <hr class="hr">
+        <b class="subhead">⭐ Staff points &amp; work reminders</b>
+        <p class="muted" style="margin-top:4px">After delivery the customer is asked about one part of the service, in turn: the washing, the pickup &amp; delivery, or the whole service — and told who did it. Their rating gives points to those staff (both, for the whole service), who get a thank-you or a polite note on a bad rating. So every staff member gets rated over time. Late work reminders go to the person responsible; orders 2+ days late also reach you.</p>
+        <div class="setgrid">
+          <div class="setfield">
+            <label for="set-pts-good">Points for "Excellent"</label>
+            <input id="set-pts-good" type="number" min="0" max="100" inputmode="numeric">
+          </div>
+          <div class="setfield">
+            <label for="set-pts-mid">Points for "It was okay"</label>
+            <input id="set-pts-mid" type="number" min="0" max="100" inputmode="numeric">
+            <small>"Needs work" gives 0 points and alerts you.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-reward">Do you reward staff for points?</label>
+            <select id="set-reward">
+              <option value="false">No — points are only a score</option>
+              <option value="true">Yes — I give a reward for points</option>
+            </select>
+            <small>Only when Yes, customers are told that their rating earns the staff a reward. Keep it true.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-reward-note">Reward rule shown to staff</label>
+            <input id="set-reward-note" type="text" maxlength="150" placeholder="e.g. ₹200 bonus for every 50 points">
+          </div>
+          <div class="setfield">
+            <label for="set-staffnames">Tell customers who did the work</label>
+            <select id="set-staffnames">
+              <option value="true">On — e.g. "your clothes were prepared by Ravi"</option>
+              <option value="false">Off</option>
+            </select>
+          </div>
+          <div class="setfield">
+            <label for="set-nudges">Late work reminders &amp; thank-yous to staff</label>
+            <select id="set-nudges">
+              <option value="true">On</option>
+              <option value="false">Off</option>
+            </select>
+          </div>
+          <div class="setfield">
+            <label for="set-nudge-hours">Reminder times (hours, 24h)</label>
+            <input id="set-nudge-hours" type="text" inputmode="numeric" placeholder="11, 15, 18">
+            <small>Hours in night quiet time are skipped. The first time also lists today's due work.</small>
+          </div>
+        </div>
+        <hr class="hr">
+        <b class="subhead">⏱ Stage reminder limits</b>
+        <p class="muted" style="margin-top:4px">These limits tighten staff reminders when a stage is taking too long. <b>Overdue</b> is based on the customer delivery date.</p>
+        <div class="setgrid" id="set-stagelimits"></div>
+        <div class="act" style="margin-top:12px">
+          <button class="btn" onclick="saveOps(this)">Save changes</button>
+          <button class="btn ghost" onclick="testStandup(this)">▶ Send standup now</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <b>🤖 AI usage limits</b>
+        <p class="muted" style="margin-top:4px">Set the monthly AI spend budget in USD. This is separate from the marketing message budget.</p>
+        <div class="setgrid">
+          <div class="setfield">
+            <label for="set-ai-budget">Monthly AI budget (USD)</label>
+            <input id="set-ai-budget" type="number" min="0" step="0.01" inputmode="decimal">
+            <small>Set 0 to leave the AI budget unset. Forecast warnings use this value.</small>
+          </div>
+        </div>
+        <div class="act" style="margin-top:12px">
+          <button class="btn" onclick="saveAiBudget(this)">Save AI budget</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <b>📣 Marketing limits</b>
+        <div class="setgrid">
+          <div class="setfield">
+            <label for="set-freqcap">Marketing msgs / customer / month</label>
+            <input inputmode="decimal" id="set-freqcap" type="number" min="0" max="10">
+            <small>Most offers one customer can get in a month, so nobody feels spammed.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-budget">Monthly marketing budget (msgs)</label>
+            <input inputmode="decimal" id="set-budget" type="number" min="0">
+            <small>Total offer messages the shop sends in a month, all customers together.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-autonomy">Marketing autonomy</label>
+            <select id="set-autonomy">
+              <option value="auto">Full auto (agent sends within limits)</option>
+              <option value="suggest">Suggest only (I approve)</option>
+              <option value="off">Off</option>
+            </select>
+            <small>Whether offers go out on their own, wait for your yes, or stop completely.</small>
+          </div>
+        </div>
+
+        <hr class="hr">
+        <b class="subhead">Daily social posts</b>
+        <p class="muted" style="margin-top:4px">A poster + caption is made every day — posted to Instagram when connected, and sent to you on WhatsApp for Google Business.</p>
+        <div class="setgrid">
+          <div class="setfield">
+            <label for="set-social">Enabled</label>
+            <select id="set-social"><option value="true">On</option><option value="false">Off</option></select>
+            <small>Turn the daily poster on or off.</small>
+          </div>
+          <div class="setfield">
+            <label for="set-socialhour">Post hour (IST)</label>
+            <input inputmode="decimal" id="set-socialhour" type="number" min="0" max="23">
+            <small>Time of day the poster is made and posted.</small>
+          </div>
+        </div>
+        <p id="ig-status" class="connstate"></p>
+        <small class="muted">Instagram is connected securely by the Kwik Klin team — contact us to link or change it.</small>
+        <div class="act" style="margin-top:12px">
+          <button class="btn" onclick="saveOps(this)">Save changes</button>
+        </div>
+      </div>
+
+      <div class="card" id="staff-card" style="margin-bottom:14px">
+        <b>🧑‍🔧 Staff</b>
+        <button type="button" class="btn sm lockbtn" id="staff-locked" hidden onclick="showUpgrade('staff_panel')">🔒 Premium mein — dekhein kya milta hai</button>
+        <p class="muted" style="margin-top:4px">People who get work orders and daily standups on WhatsApp.</p>
+        <div class="setgrid staffadd">
+          <div class="setfield">
+            <label for="sf-name">Name</label>
+            <input id="sf-name" onkeydown="if(event.key==='Enter')addStaff(document.getElementById('sf-add'))">
+            <small class="fielderr" id="sf-name-err"></small>
+          </div>
+          <div class="setfield">
+            <label for="sf-phone">Phone</label>
+            <input id="sf-phone" type="tel" inputmode="numeric" placeholder="10 digits" onkeydown="if(event.key==='Enter')addStaff(document.getElementById('sf-add'))">
+            <small class="fielderr" id="sf-phone-err"></small>
+          </div>
+          <div class="setfield">
+            <label for="sf-role">Role</label>
+            <select id="sf-role"><option value="WASHER">Washerman — dhulai aur press</option><option value="IRONER">Ironing / Press — dhulai ke baad press</option><option value="DELIVERY">Delivery — pickup aur delivery</option><option value="SUPERVISOR">Washerman / Manager — khud kaam bhi, sabka dekhein bhi</option><option value="MANAGER">Manager — sirf dekh-rekh</option><option value="ADMIN">Admin (owner — full access)</option></select>
+            <small>Washerman ko dhulai/press ka kaam, delivery ko pickup aur drop. "Washerman / Manager" wo hai jo khud bhi kaam karta hai aur baaki ka bhi dekhta hai.</small>
+          </div>
+          <div class="setfield addbtn">
+            <button class="btn" id="sf-add" onclick="addStaff(this)">Add staff</button>
+          </div>
+        </div>
+        <div id="staff-list" style="margin-top:14px"></div>
+      </div>
+      <div class="card">
+        <b>Backups</b>
+        <p class="muted" style="margin-top:4px">Full JSON backup of the business — customers, bills, payments, rates, knowledge, everything.</p>
+        <button class="btn ghost" style="margin-top:8px" onclick="dlServer('/admin/api/backup.json','kwikklin-backup.json')">⬇ Download backup (.json)</button>
+      </div>
+      </div>
+
+      <div id="st-messages" style="display:none">
+      <div class="card" style="margin-bottom:14px">
+        <b>Customer message language</b>
+        <p class="muted" style="margin-top:4px">Bills, status updates, reminders and thank-you messages go to customers in this language. The AI chat replies always follow the customer's own language.</p>
+        <div class="lang-pick" role="radiogroup" aria-label="Customer message language">
+          <button type="button" role="radio" data-lang="hi" onclick="setCustomerLang('hi', this)"><b>Hinglish</b><span>"Namaste! Aapka order mil gaya 🧺"</span></button>
+          <button type="button" role="radio" data-lang="en" onclick="setCustomerLang('en', this)"><b>English</b><span>"Hello! Your order is received 🧺"</span></button>
+        </div>
+        <p class="muted" style="margin-top:8px;font-size:12px">Messages you rewrote yourself below stay exactly as you wrote them.</p>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <b>✉️ Message formats — write them your way</b>
+        <p class="muted" style="margin-top:4px">These go to customers as free-form messages (while the 24h window is open). Edit freely — changes apply instantly, no approval needed. <b>{placeholders}</b> are replaced with real values.</p>
+        <div class="filters" style="margin-top:8px">
+          <select id="mf-key" aria-label="Message format" style="min-width:240px" onchange="mfPick()"></select>
+          <span id="mf-flag"></span>
+        </div>
+        <div class="frm">
+          <textarea id="mf-text" rows="4" aria-label="Message text"></textarea>
+          <div class="muted" id="mf-ph" style="font-size:11.5px"></div>
+          <div class="act">
+            <button class="btn sm" onclick="mfSave(this)">Save</button>
+            <button class="btn sm ghost" onclick="mfReset(this)">Reset to default</button>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+
+    <!-- External polisher ledger -->
+    <section id="sec-polisher" style="display:none">
+      <div class="pagehead"><div><h2>Polisher ledger</h2><p>Sarees out for polish, what came back, and what you owe the polisher</p></div>
+        <div class="actions"><button class="btn ghost" onclick="loadPolisher()"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-refresh"/></svg><span class="hide-sm">Refresh</span></button></div></div>
+      <div class="grid kpis pol-kpis" id="pol-kpis"></div>
+
+      <div class="pol-grid">
+        <div class="card pol-actions">
+          <div class="pol-tabs" role="tablist" aria-label="Polisher actions">
+            <button role="tab" class="on" data-pol-tab="send" onclick="polTab('send')">Send sarees</button>
+            <button role="tab" data-pol-tab="pay" onclick="polTab('pay')">Record payment</button>
+            <button role="tab" data-pol-tab="vendor" onclick="polTab('vendor')">Add polisher</button>
+          </div>
+          <div class="pol-pane" data-pol-pane="send">
+            <div class="pol-form">
+              <div class="pol-wide"><label for="pol-vendor">Polisher</label><select id="pol-vendor"><option value="">Add a polisher first</option></select></div>
+              <div><label for="pol-qty">Sarees sent</label>
+                <div class="pol-step"><button type="button" onclick="polStep('pol-qty',-1)" aria-label="One less">−</button><input id="pol-qty" type="number" min="1" value="10" inputmode="numeric"><button type="button" onclick="polStep('pol-qty',1)" aria-label="One more">+</button></div></div>
+              <div><label for="pol-date">Date sent</label><input id="pol-date" type="date"></div>
+              <div class="pol-wide"><label for="pol-notes">Notes <span class="muted">· optional</span></label><input id="pol-notes" placeholder="e.g. 4 silk, 6 cotton"></div>
+            </div>
+            <div class="pol-foot"><span class="muted" id="pol-send-hint">The polisher gets a WhatsApp with the count.</span>
+              <button class="btn" onclick="createPolisherBatch(this)">Send &amp; notify</button></div>
+          </div>
+          <div class="pol-pane" data-pol-pane="pay" hidden>
+            <div class="pol-form">
+              <div class="pol-wide"><label for="pol-pay-vendor">Polisher</label><select id="pol-pay-vendor"><option value="">Select polisher</option></select></div>
+              <div><label for="pol-pay-amount">Amount (₹)</label><input id="pol-pay-amount" type="number" min="0.01" step="0.01" placeholder="250" inputmode="decimal"></div>
+              <div><label for="pol-pay-date">Payment date</label><input id="pol-pay-date" type="date"></div>
+              <div><label for="pol-pay-method">Method</label><select id="pol-pay-method"><option value="cash">Cash</option><option value="upi">UPI</option><option value="bank">Bank transfer</option><option value="other">Other</option></select></div>
+              <div><label for="pol-pay-ref">Reference <span class="muted">· optional</span></label><input id="pol-pay-ref" placeholder="UPI reference"></div>
+            </div>
+            <div class="pol-foot"><button type="button" class="btn ghost sm" id="pol-pay-full" onclick="polPayFull()">Pay full balance</button>
+              <button class="btn" onclick="recordPolisherPayment(this)">Save &amp; notify</button></div>
+          </div>
+          <div class="pol-pane" data-pol-pane="vendor" hidden>
+            <div class="pol-form">
+              <div class="pol-wide"><label for="pol-name">Polisher name</label><input id="pol-name" placeholder="e.g. Ramesh Polish Works"></div>
+              <div><label for="pol-phone">WhatsApp number</label><input id="pol-phone" type="tel" inputmode="numeric" placeholder="98XXXXXXXX"></div>
+              <div><label for="pol-rate">Rate per saree (₹)</label><input id="pol-rate" type="number" min="1" step="0.5" value="25" inputmode="decimal"></div>
+            </div>
+            <div class="pol-foot"><span></span><button class="btn" onclick="createPolisherVendor(this)">Save polisher</button></div>
+          </div>
+          <p class="pol-msg" id="pol-message" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="card pol-vendors-card">
+          <div class="panel-head"><h3>Polishers</h3><button class="btn sm ghost" onclick="polTab('vendor')"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg>Add</button></div>
+          <div id="pol-vendors"><span class="muted">Loading…</span></div>
+        </div>
+      </div>
+
+      <div class="card pol-ledger">
+        <div class="panel-head"><h3>Batches</h3><span class="muted" id="pol-batch-count"></span></div>
+        <div id="pol-batches"><span class="muted">Loading…</span></div>
+      </div>
+      <div class="card pol-ledger">
+        <div class="panel-head"><h3>Payments</h3><span class="muted" id="pol-pay-count"></span></div>
+        <div id="pol-payments"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- bottom tab bar (mobile): thumb-zone essentials + More sheet -->
+<nav class="tabbar" aria-label="Main">
+  <div data-s="dashboard" onclick="go('dashboard')"><span class="ti"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-dashboard"/></svg></span>Home</div>
+  <div data-s="inbox" onclick="go('inbox')" style="position:relative"><span class="ti"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-inbox"/></svg></span>Inbox<span class="tab-badge" id="unread-badge">0</span></div>
+  <div data-s="newbill" class="tab-fab" onclick="go('newbill')"><span class="ti"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-plus"/></svg></span>New bill</div>
+  <div data-s="customers" onclick="go('customers')"><span class="ti"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-users"/></svg></span>Customers</div>
+  <div onclick="openSheet()"><span class="ti"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-more"/></svg></span>More</div>
+</nav>
+
+<!-- More sheet (mobile) -->
+<div class="sheet-ov" id="sheet-ov" onclick="closeSheet()"></div>
+<div class="sheet" id="more-sheet">
+  <div class="grabber"></div>
+  <div class="sheet-grid">
+    <div onclick="sheetGo('bills')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-receipt"/></svg></span>Bill history</div>
+    <div data-s="scan" onclick="sheetGo('scan')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-scan"/></svg></span>Scan station</div>
+    <div onclick="sheetGo('expenses')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-expense"/></svg></span>Expenses</div>
+    <div onclick="sheetGo('reports')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-reports"/></svg></span>Reports</div>
+    <div onclick="sheetGo('polisher')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-ledger"/></svg></span>Polisher</div>
+    <div data-s="growth" onclick="sheetGo('growth')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui3#i-usage"/></svg></span>Growth</div>
+    <div onclick="sheetGo('campaigns')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-campaign"/></svg></span>Campaigns</div>
+    <div onclick="sheetGo('business')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-briefcase"/></svg></span>Business</div>
+    <div onclick="sheetGo('tasks')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-task"/></svg></span>Tasks</div>
+    <div onclick="sheetGo('agents')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-agent"/></svg></span>Agents</div>
+    <div onclick="sheetGo('usage')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-usage"/></svg></span>AI usage</div>
+    <div onclick="sheetGo('training')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-training"/></svg></span>AI training</div>
+    <div onclick="sheetGo('activity')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-activity"/></svg></span>Activity</div>
+    <div onclick="sheetGo('settings')"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-settings"/></svg></span>Settings</div>
+    <div onclick="closeSheet();openGbpPoster()"><span class="si"><svg class="ic" aria-hidden="true"><use href="/admin/static/icons.svg?v=ui2#i-image"/></svg></span>Google poster</div>
+  </div>
+</div>
+
+<div id="offline-bar">📴 No internet — messages are queued and will send as soon as you're back online</div>
+
+<!-- overlays -->
+<div class="overlay" id="modal-ov" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-body"></div></div>
+<div class="drawer" id="drawer"><div style="text-align:right"><button class="btn ghost sm" onclick="closeDrawer()">✕ Close</button></div><div id="drawer-body"></div></div>
+<div id="toasts"></div>
+<pre id="receipt"></pre>
+
+</body>
+</html>

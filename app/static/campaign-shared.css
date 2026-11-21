@@ -1,0 +1,39 @@
+/* Dono campaign screens: dukaan aur control panel. Sabse chhota phone 320px. */
+.cs-funnel { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 10px 0; }
+.cs-funnel > div { min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
+.cs-funnel b { display: block; font-size: 1.125rem; line-height: 1.3; }
+.cs-funnel span { display: block; font-size: .75rem; color: var(--muted); overflow-wrap: anywhere; }
+.cs-pause { margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: .8125rem; overflow-wrap: anywhere; }
+.cs-issue { background: var(--error-soft); color: var(--error); }
+.camp-badge.paused { background: var(--warning-soft); color: var(--warning); }
+.cs-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+#sec-campaigns :is(button, select, input, summary, textarea):focus-visible,
+#modal-body :is(button, select, input, summary, textarea):focus-visible,
+.sl-camp :is(button, a):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+#sec-campaigns { min-width: 0; overflow-wrap: break-word; }
+#sec-campaigns .camp-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+#sec-campaigns .camp-status-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+#sec-campaigns :is(.camp-live-grid, .camp-bottom-grid, .camp-review-grid, .camp-main-card, .camp-card, .camp-preview-card) { min-width: 0; }
+#sec-campaigns img, #modal-body .camp-review-modal img { max-width: 100%; height: auto; }
+
+.camp-detail-table-wrap { overflow-x: auto; }
+
+@media (max-width: 767.98px) {
+  #sec-campaigns :is(.camp-live-grid, .camp-bottom-grid, .camp-review-grid, .camp-audience-grid, .camp-type-grid) { grid-template-columns: minmax(0, 1fr); }
+  #sec-campaigns :is(.camp-tabs, .camp-top, .camp-top-actions, .camp-send-row, .camp-template-row, .camp-format-toolbar, .camp-history-meta, .camp-history-filters) { flex-wrap: wrap; }
+  #sec-campaigns :is(.camp-kpis, .camp-status-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #sec-campaigns :is(button, summary, select), #modal-body :is(.camp-actions button, .cs-actions button) { min-height: 44px; }
+  #sec-campaigns .camp-phone { max-width: 100%; }
+
+  /* Recipient table phone par cards: bagal mein scroll nahi */
+  .camp-detail-table-wrap { overflow: visible; min-width: 0; }
+  .camp-detail-table, .camp-detail-table tbody, .camp-detail-table tr, .camp-detail-table td { display: block; width: 100%; min-width: 0; }
+  .camp-detail-table thead { position: absolute; left: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .camp-detail-table tr { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 10px; }
+  .camp-detail-table td { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border: 0; text-align: right; overflow-wrap: anywhere; }
+  .camp-detail-table td::before { content: attr(data-label); flex: none; color: var(--muted); font-size: .75rem; text-align: left; }
+  .camp-detail-table td:empty { display: none; }
+  .modal { max-height: 92dvh; overflow-y: auto; max-width: 100%; }
+}
