@@ -34,6 +34,7 @@ import com.kwikklin.crm.data.outbox.OfflineActionEntity
 import com.kwikklin.crm.data.repository.ApiOutcome
 import com.kwikklin.crm.data.repository.StaffRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,7 +125,16 @@ class StaffViewModel(
 
     private var outboxCollectorJob: Job? = null
     private var livePollerJob: Job? = null
+    private var refreshJob: Job? = null
+    private var orderDetailJob: Job? = null
+    private var customerSearchJob: Job? = null
+    private var customerExtrasJob: Job? = null
+    private var billsJob: Job? = null
     private val seenNotificationCodes = mutableSetOf<String>()
+
+    /** Set from the Activity lifecycle; the poller slows down while the app is not visible. */
+    @Volatile
+    private var isAppInForeground = true
 
     init {
         observeConnectivity()
@@ -171,19 +181,15 @@ class StaffViewModel(
                         )
                     }
                 }
-                is ApiOutcome.NetworkError -> {
-                    _uiState.update {
-                        it.copy(session = SessionState.NetworkFailure(res.message, hadSession = true))
-                    }
-                }
-                is ApiOutcome.ServerError -> {
-                    _uiState.update {
-                        it.copy(session = SessionState.NetworkFailure(res.message, hadSession = true))
-                    }
-                }
+                is ApiOutcome.NetworkError -> showNetworkFailure(res.message)
+                is ApiOutcome.ServerError -> showNetworkFailure(res.message)
                 else -> _uiState.update { it.copy(session = SessionState.LoggedOut()) }
             }
         }
+    }
+
+    private fun showNetworkFailure(message: String) {
+        _uiState.update { it.copy(session = SessionState.NetworkFailure(message, hadSession = true)) }
     }
 
     fun login(phone: String, password: String) {
@@ -191,6 +197,7 @@ class StaffViewModel(
             _uiState.update { it.copy(loginError = "Enter a valid phone number and password.") }
             return
         }
+        if (_uiState.value.isSubmitting) return
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, loginError = null, subscriptionBanner = null) }
             when (val res = repository.login(phone, password)) {
@@ -213,12 +220,8 @@ class StaffViewModel(
                         )
                     }
                 }
-                is ApiOutcome.NetworkError -> {
-                    _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
-                }
-                is ApiOutcome.ServerError -> {
-                    _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
-                }
+                is ApiOutcome.NetworkError -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
+                is ApiOutcome.ServerError -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
                 else -> _uiState.update { it.copy(isSubmitting = false) }
             }
         }
@@ -229,20 +232,11 @@ class StaffViewModel(
             emitToast("New password must be at least 6 characters.", isError = true)
             return
         }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.changePassword(oldPassword, newPassword)) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false, mustChangePassword = false) }
-                    _events.tryEmit(UiEvent.PasswordChanged)
-                    emitToast("Password updated successfully.")
-                    refreshAll(quiet = true)
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.changePassword(oldPassword, newPassword) }) {
+            _uiState.update { it.copy(mustChangePassword = false) }
+            _events.tryEmit(UiEvent.PasswordChanged)
+            emitToast("Password updated successfully.")
+            refreshAll(quiet = true)
         }
     }
 
@@ -276,22 +270,37 @@ class StaffViewModel(
     }
 
     // ─── Live Data Refresh ──────────────────────────────────────────────────
+    /**
+     * Latest-wins refresh: a newer call cancels the in-flight one, so a slow poll that
+     * started before a status change can never overwrite the fresher post-change data.
+     */
     fun refreshAll(quiet: Boolean = false) {
-        viewModelScope.launch {
-            if (!quiet) _uiState.update { it.copy(isRefreshing = true) }
+        refreshJob?.cancel()
+        if (!quiet) _uiState.update { it.copy(isRefreshing = true) }
+        refreshJob = viewModelScope.launch {
             when (val res = repository.bootSession()) {
                 is ApiOutcome.Success -> applyBootSuccess(res.data, isInitial = false)
                 else -> handleCommonFailure(res, silentNetwork = quiet)
             }
-            if (!quiet) _uiState.update { it.copy(isRefreshing = false) }
+            _uiState.update { it.copy(isRefreshing = false) }
+        }
+    }
+
+    fun onAppForegroundChanged(foreground: Boolean) {
+        val cameBack = foreground && !isAppInForeground
+        isAppInForeground = foreground
+        if (cameBack && _uiState.value.session is SessionState.Authenticated && _uiState.value.isOnline) {
+            refreshAll(quiet = true)
         }
     }
 
     fun loadHistory() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
-            val routeRes = repository.fetchRoute(tab = "done", limit = 60)
-            val tasksRes = repository.fetchTasks(tab = "done", limit = 100)
+            val routeCall = async { repository.fetchRoute(tab = "done", limit = 60) }
+            val tasksCall = async { repository.fetchTasks(tab = "done", limit = 100) }
+            val routeRes = routeCall.await()
+            val tasksRes = tasksCall.await()
             if (routeRes is ApiOutcome.Success) {
                 _uiState.update { it.copy(historyStops = routeRes.data.stops) }
             } else {
@@ -344,27 +353,18 @@ class StaffViewModel(
     }
 
     fun submitCashHandover(handedCash: Double, note: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.submitCashHandoverOnlineOnly(handedCash, note)) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    _events.tryEmit(UiEvent.CashHandoverDone)
-                    emitToast("Cash handover recorded. Waiting for manager confirmation.")
-                    loadMyCash()
-                    refreshAll(quiet = true)
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.submitCashHandoverOnlineOnly(handedCash, note) }) {
+            _events.tryEmit(UiEvent.CashHandoverDone)
+            emitToast("Cash handover recorded. Waiting for manager confirmation.")
+            loadMyCash()
+            refreshAll(quiet = true)
         }
     }
 
     // ─── Order Details & Strict Status Transitions ──────────────────────────
     fun openOrderDetail(orderNumber: String) {
-        viewModelScope.launch {
+        orderDetailJob?.cancel()
+        orderDetailJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     isLoadingOrder = true,
@@ -373,15 +373,12 @@ class StaffViewModel(
                 )
             }
             when (val res = repository.fetchOrderDetail(orderNumber)) {
-                is ApiOutcome.Success -> {
+                is ApiOutcome.Success ->
                     _uiState.update { it.copy(isLoadingOrder = false, selectedOrder = res.data) }
-                }
-                is ApiOutcome.NetworkError -> {
+                is ApiOutcome.NetworkError ->
                     _uiState.update { it.copy(isLoadingOrder = false, orderLoadError = res.message) }
-                }
-                is ApiOutcome.ServerError -> {
+                is ApiOutcome.ServerError ->
                     _uiState.update { it.copy(isLoadingOrder = false, orderLoadError = res.message) }
-                }
                 else -> {
                     _uiState.update { it.copy(isLoadingOrder = false) }
                     handleCommonFailure(res)
@@ -391,7 +388,10 @@ class StaffViewModel(
     }
 
     fun closeOrderDetail() {
-        _uiState.update { it.copy(selectedOrder = null, orderLoadError = null, activeOrderDues = null) }
+        orderDetailJob?.cancel()
+        _uiState.update {
+            it.copy(selectedOrder = null, isLoadingOrder = false, orderLoadError = null, activeOrderDues = null)
+        }
     }
 
     fun requestCustomerCall(orderNumber: String) {
@@ -429,22 +429,9 @@ class StaffViewModel(
             emitToast("Payment collection is not permitted for your role.", isError = true)
             return
         }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.collectPaymentOnlineOnly(orderNumber, amount, method, settlePrevious)) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    emitToast("Payment recorded (${method.uppercase()}).")
-                    refreshAll(quiet = true)
-                    if (_uiState.value.selectedOrder?.number == orderNumber) {
-                        openOrderDetail(orderNumber)
-                    }
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.collectPaymentOnlineOnly(orderNumber, amount, method, settlePrevious) }) {
+            emitToast("Payment recorded (${method.uppercase()}).")
+            refreshAfterOrderChange(orderNumber)
         }
     }
 
@@ -489,19 +476,9 @@ class StaffViewModel(
 
     // ─── Tasks & Messages ───────────────────────────────────────────────────
     fun markTaskDone(code: String, note: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.markTaskDone(code, note)) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    emitToast("Task completed.")
-                    refreshAll(quiet = true)
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.markTaskDone(code, note) }) {
+            emitToast("Task completed.")
+            refreshAll(quiet = true)
         }
     }
 
@@ -526,19 +503,9 @@ class StaffViewModel(
 
     fun sendTaskMessage(code: String, text: String) {
         if (text.isBlank()) return
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.sendTaskMessage(code, text.trim())) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    openTaskThread(code)
-                    refreshAll(quiet = true)
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.sendTaskMessage(code, text.trim()) }) {
+            openTaskThread(code)
+            refreshAll(quiet = true)
         }
     }
 
@@ -547,19 +514,9 @@ class StaffViewModel(
             emitToast("Please write a short reason for cancellation.", isError = true)
             return
         }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.requestTaskCancel(code, reason.trim())) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    emitToast("Cancellation request sent to shop owner.")
-                    refreshAll(quiet = true)
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.requestTaskCancel(code, reason.trim()) }) {
+            emitToast("Cancellation request sent to shop owner.")
+            refreshAll(quiet = true)
         }
     }
 
@@ -581,13 +538,16 @@ class StaffViewModel(
         }
     }
 
+    /** Debounced, latest-wins: typing fast fires one request, and stale results never win. */
     fun searchCustomers(query: String) {
+        customerSearchJob?.cancel()
         val trimmed = query.trim()
         if (trimmed.length < 2) {
             _uiState.update { it.copy(customerSearchHits = emptyList()) }
             return
         }
-        viewModelScope.launch {
+        customerSearchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
             when (val res = repository.searchCustomers(trimmed)) {
                 is ApiOutcome.Success -> _uiState.update { it.copy(customerSearchHits = res.data) }
                 else -> _uiState.update { it.copy(customerSearchHits = emptyList()) }
@@ -596,6 +556,8 @@ class StaffViewModel(
     }
 
     fun clearCustomerSearch() {
+        customerSearchJob?.cancel()
+        customerExtrasJob?.cancel()
         _uiState.update {
             it.copy(
                 customerSearchHits = emptyList(),
@@ -607,10 +569,13 @@ class StaffViewModel(
 
     fun loadCustomerExtras(customerRef: String) {
         if (customerRef.isBlank()) return
-        viewModelScope.launch {
+        customerExtrasJob?.cancel()
+        customerExtrasJob = viewModelScope.launch {
             _uiState.update { it.copy(customerRewards = emptyList(), customerUsualItems = emptyList()) }
-            val rewardsRes = repository.fetchCustomerRewards(customerRef)
-            val usualRes = repository.fetchCustomerUsualItems(customerRef)
+            val rewardsCall = async { repository.fetchCustomerRewards(customerRef) }
+            val usualCall = async { repository.fetchCustomerUsualItems(customerRef) }
+            val rewardsRes = rewardsCall.await()
+            val usualRes = usualCall.await()
             _uiState.update {
                 it.copy(
                     customerRewards = (rewardsRes as? ApiOutcome.Success)?.data?.available.orEmpty(),
@@ -621,22 +586,11 @@ class StaffViewModel(
     }
 
     fun openPickupBillFromTask(taskCode: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.fetchPickupBillContext(taskCode)) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false, pickupBillContext = res.data) }
-                    if (res.data.customerRef.isNotBlank()) {
-                        loadCustomerExtras(res.data.customerRef)
-                    }
-                    loadRates(force = true)
-                    _events.tryEmit(UiEvent.OpenNewBillTab(fromPickupTask = true))
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        launchSubmit({ repository.fetchPickupBillContext(taskCode) }) { context ->
+            _uiState.update { it.copy(pickupBillContext = context) }
+            if (context.customerRef.isNotBlank()) loadCustomerExtras(context.customerRef)
+            loadRates(force = true)
+            _events.tryEmit(UiEvent.OpenNewBillTab(fromPickupTask = true))
         }
     }
 
@@ -650,37 +604,26 @@ class StaffViewModel(
             emitToast("Billing is not enabled for your role or plan.", isError = true)
             return
         }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.createBillOnlineOnly(request)) {
-                is ApiOutcome.Success -> {
-                    val created = res.data
-                    _uiState.update {
-                        it.copy(
-                            isSubmitting = false,
-                            pickupBillContext = null,
-                            customerSearchHits = emptyList(),
-                            customerRewards = emptyList(),
-                            customerUsualItems = emptyList()
-                        )
-                    }
-                    val msg = if (created.pickupCompleted) {
-                        "${created.orderNumber} — bill created & pickup completed"
-                    } else {
-                        "${created.orderNumber} created"
-                    }
-                    emitToast(msg)
-                    _events.tryEmit(UiEvent.BillCreated(created))
-                    refreshAll(quiet = true)
-                    loadBills(reset = true)
-                    if (created.orderNumber.isNotBlank()) {
-                        openReceipt(created.orderNumber, fallbackBillUrl = created.billUrl)
-                    }
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
+        launchSubmit({ repository.createBillOnlineOnly(request) }) { created ->
+            _uiState.update {
+                it.copy(
+                    pickupBillContext = null,
+                    customerSearchHits = emptyList(),
+                    customerRewards = emptyList(),
+                    customerUsualItems = emptyList()
+                )
+            }
+            val msg = if (created.pickupCompleted) {
+                "${created.orderNumber} — bill created & pickup completed"
+            } else {
+                "${created.orderNumber} created"
+            }
+            emitToast(msg)
+            _events.tryEmit(UiEvent.BillCreated(created))
+            refreshAll(quiet = true)
+            loadBills(reset = true)
+            if (created.orderNumber.isNotBlank()) {
+                openReceipt(created.orderNumber, fallbackBillUrl = created.billUrl)
             }
         }
     }
@@ -691,7 +634,9 @@ class StaffViewModel(
         mineOnly: Boolean = false,
         reset: Boolean = true
     ) {
-        viewModelScope.launch {
+        // A new search/filter replaces any in-flight page; "load more" never stacks.
+        if (reset) billsJob?.cancel() else if (billsJob?.isActive == true) return
+        billsJob = viewModelScope.launch {
             val offset = if (reset) 0 else _uiState.value.bills.size
             _uiState.update { it.copy(isLoadingBills = true) }
             when (val res = repository.fetchBills(
@@ -777,26 +722,15 @@ class StaffViewModel(
     }
 
     fun addExpense(category: String, amount: Double, spentOn: String?, description: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = repository.createExpenseOnlineOnly(
-                CreateExpenseRequest(
-                    category = category,
-                    amount = amount,
-                    spentOn = spentOn?.takeIf { it.isNotBlank() },
-                    description = description.trim()
-                )
-            )) {
-                is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    emitToast("Expense saved.")
-                    loadExpenses()
-                }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
-            }
+        val request = CreateExpenseRequest(
+            category = category,
+            amount = amount,
+            spentOn = spentOn?.takeIf { it.isNotBlank() },
+            description = description.trim()
+        )
+        launchSubmit({ repository.createExpenseOnlineOnly(request) }) {
+            emitToast("Expense saved.")
+            loadExpenses()
         }
     }
 
@@ -843,34 +777,47 @@ class StaffViewModel(
         successMsg: String,
         block: suspend () -> ApiOutcome<*>
     ) {
+        if (_uiState.value.isSubmitting) return
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true) }
-            when (val res = block()) {
+            val res = block()
+            _uiState.update { it.copy(isSubmitting = false) }
+            when (res) {
                 is ApiOutcome.Success -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
                     emitToast(successMsg)
-                    refreshAll(quiet = true)
-                    if (_uiState.value.selectedOrder?.number == orderNumber) {
-                        openOrderDetail(orderNumber)
-                    }
+                    refreshAfterOrderChange(orderNumber)
                 }
-                is ApiOutcome.QueuedOffline -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
+                is ApiOutcome.QueuedOffline ->
                     emitToast("Offline: '${res.actionLabel}' queued and will sync automatically.")
-                }
                 is ApiOutcome.ConflictResolved -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
                     emitToast(res.message)
-                    refreshAll(quiet = true)
-                    if (_uiState.value.selectedOrder?.number == orderNumber) {
-                        openOrderDetail(orderNumber)
-                    }
+                    refreshAfterOrderChange(orderNumber)
                 }
-                else -> {
-                    _uiState.update { it.copy(isSubmitting = false) }
-                    handleCommonFailure(res)
-                }
+                else -> handleCommonFailure(res)
             }
+        }
+    }
+
+    private fun refreshAfterOrderChange(orderNumber: String) {
+        refreshAll(quiet = true)
+        if (_uiState.value.selectedOrder?.number == orderNumber) openOrderDetail(orderNumber)
+    }
+
+    /**
+     * Runs a user-initiated write with the shared isSubmitting flag. A second tap while a
+     * write is in flight is ignored, which prevents double payments / duplicate bills
+     * (collect & handover generate a fresh client reference per call).
+     */
+    private fun <T> launchSubmit(
+        call: suspend () -> ApiOutcome<T>,
+        onSuccess: (T) -> Unit
+    ) {
+        if (_uiState.value.isSubmitting) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true) }
+            val res = call()
+            _uiState.update { it.copy(isSubmitting = false) }
+            if (res is ApiOutcome.Success) onSuccess(res.data) else handleCommonFailure(res)
         }
     }
 
@@ -908,21 +855,17 @@ class StaffViewModel(
         livePollerJob?.cancel()
         livePollerJob = viewModelScope.launch {
             while (isActive) {
-                delay(45_000L)
+                delay(if (isAppInForeground) POLL_FOREGROUND_MS else POLL_BACKGROUND_MS)
                 if (_uiState.value.isOnline && _uiState.value.session is SessionState.Authenticated) {
-                    when (val res = repository.bootSession()) {
-                        is ApiOutcome.Success -> applyBootSuccess(res.data, isInitial = false)
-                        is ApiOutcome.Unauthorized -> forceLocalLogout(res.message)
-                        else -> Unit
-                    }
+                    refreshAll(quiet = true)
                 }
             }
         }
     }
 
     private fun stopAuthenticatedJobs() {
-        outboxCollectorJob?.cancel()
-        livePollerJob?.cancel()
+        listOf(outboxCollectorJob, livePollerJob, refreshJob, orderDetailJob, customerSearchJob, customerExtrasJob, billsJob)
+            .forEach { it?.cancel() }
         outboxCollectorJob = null
         livePollerJob = null
     }
@@ -936,7 +879,7 @@ class StaffViewModel(
                     item.title.contains("urgent", ignoreCase = true) ||
                     item.text.contains("urgent", ignoreCase = true)
                 // Privacy safe: strip any phone-like strings before posting lock-screen notification
-                val safeBody = item.text.replace(Regex("\\+?\\d[\\d\\s-]{7,}\\d"), "[redacted]")
+                val safeBody = item.text.replace(PHONE_LIKE, "[redacted]")
                 StaffNotificationHelper.postStaffAlert(
                     context = appContext,
                     notificationId = key.hashCode(),
@@ -987,6 +930,14 @@ class StaffViewModel(
 
     private fun emitToast(message: String, isError: Boolean = false) {
         _events.tryEmit(UiEvent.Toast(message, isError))
+    }
+
+    private companion object {
+        const val POLL_FOREGROUND_MS = 45_000L
+        const val POLL_BACKGROUND_MS = 3 * 60_000L
+        const val SEARCH_DEBOUNCE_MS = 250L
+        /** Phone-number-like runs, stripped before anything reaches the lock screen. */
+        val PHONE_LIKE = Regex("\\+?\\d[\\d\\s-]{7,}\\d")
     }
 
     class Factory(

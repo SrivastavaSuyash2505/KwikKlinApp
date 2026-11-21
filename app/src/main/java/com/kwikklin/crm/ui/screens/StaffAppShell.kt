@@ -1,6 +1,10 @@
 package com.kwikklin.crm.ui.screens
 
+import android.Manifest
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -53,11 +57,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kwikklin.crm.data.network.StaffMeDto
 import com.kwikklin.crm.data.network.StaffRole
+import com.kwikklin.crm.data.notifications.StaffNotificationHelper
 import com.kwikklin.crm.ui.StaffUiState
 import com.kwikklin.crm.ui.StaffViewModel
 import com.kwikklin.crm.ui.UiEvent
@@ -99,6 +105,20 @@ fun StaffAppShell(
     var currentTab by rememberSaveable(me.phone, me.canCreateBill) { mutableStateOf(defaultTab) }
     var overlay by rememberSaveable { mutableStateOf(SecondaryOverlay.NONE) }
     var showVoluntaryPasswordDialog by rememberSaveable { mutableStateOf(false) }
+
+    // Android 13+: urgent-work alerts are useless without this permission, so ask once per
+    // sign-in instead of only when the staff member happens to open the Notifications page.
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+    LaunchedEffect(me.phone) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !StaffNotificationHelper.hasNotificationPermission(context)
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     // Switch straight to New Bill tab when Delivery Boy taps "Make Pickup Bill" on a task
     LaunchedEffect(viewModel) {

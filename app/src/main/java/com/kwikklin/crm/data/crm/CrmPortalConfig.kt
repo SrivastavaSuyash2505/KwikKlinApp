@@ -1,8 +1,6 @@
 package com.kwikklin.crm.data.crm
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import com.kwikklin.crm.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,14 +47,6 @@ class CrmConnectionPrefs(context: Context) {
 }
 
 object CrmHealthChecker {
-    fun isNetworkAvailable(context: Context): Boolean {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return true
-        val active = cm.activeNetwork ?: return false
-        val caps = cm.getNetworkCapabilities(active) ?: return false
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
-
     suspend fun pingHealth(baseUrl: String): CrmHealthResult = withContext(Dispatchers.IO) {
         val start = System.currentTimeMillis()
         val healthUrl = "${CrmConnectionPrefs.normalizeBaseUrl(baseUrl)}/health"

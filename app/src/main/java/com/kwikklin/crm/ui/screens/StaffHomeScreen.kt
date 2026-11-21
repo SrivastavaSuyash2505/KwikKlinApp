@@ -53,6 +53,7 @@ import com.kwikklin.crm.data.network.StaffMeDto
 import com.kwikklin.crm.data.network.StaffRole
 import com.kwikklin.crm.data.network.TaskDto
 import com.kwikklin.crm.data.network.TodayDto
+import com.kwikklin.crm.ui.components.withUniqueKeys
 import com.kwikklin.crm.ui.components.ConnectivityOutboxBanner
 import com.kwikklin.crm.ui.components.EmptyStateCard
 import com.kwikklin.crm.ui.components.NavyHeroSurface
@@ -342,7 +343,7 @@ fun StaffHomeScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            items(urgentStops.take(3), key = { "urgent_${it.number}" }) { stop ->
+            items(urgentStops.take(3).withUniqueKeys { "urgent_${it.number}_${it.kind}" }, key = { it.first }) { (_, stop) ->
                 HomeQuickOrderRow(
                     stop = stop,
                     showFinancials = me.allowFinancialVisibility,
@@ -388,7 +389,7 @@ fun StaffHomeScreen(
                 )
             }
         } else {
-            items(workStops.take(5), key = { "home_${it.number}_${it.status}" }) { stop ->
+            items(workStops.take(5).withUniqueKeys { "home_${it.number}_${it.kind}" }, key = { it.first }) { (_, stop) ->
                 HomeQuickOrderRow(
                     stop = stop,
                     showFinancials = me.allowFinancialVisibility,
@@ -579,7 +580,7 @@ private fun HomeQuickOrderRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = if (stop.delivery.isNotBlank()) "Due: ${stop.delivery}" else stop.kind,
+                    text = if (stop.delivery.isNotBlank()) "By ${stop.delivery}" else stop.kind.replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.labelSmall,
                     color = InkMuted
                 )

@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kwikklin.crm.data.network.NotificationItemDto
 import com.kwikklin.crm.data.notifications.StaffNotificationHelper
+import com.kwikklin.crm.ui.components.withUniqueKeys
 import com.kwikklin.crm.ui.components.EmptyStateCard
 import com.kwikklin.crm.ui.components.UrgentBadge
 import com.kwikklin.crm.ui.theme.BorderLight
@@ -204,7 +205,7 @@ fun NotificationsScreen(
                     )
                 }
             } else {
-                items(items, key = { it.code.ifBlank { "${it.title}_${it.at}" } }) { note ->
+                items(items.withUniqueKeys { it.code.ifBlank { "${it.title}_${it.at}" } }, key = { it.first }) { (_, note) ->
                     val isUrgent = note.urgent || note.title.contains("urgent", ignoreCase = true)
                     Surface(
                         color = SurfaceWhite,

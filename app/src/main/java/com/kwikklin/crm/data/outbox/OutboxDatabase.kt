@@ -41,9 +41,6 @@ interface OfflineActionDao {
     @Query("SELECT * FROM offline_status_outbox ORDER BY createdAtMs ASC")
     suspend fun getAllPending(): List<OfflineActionEntity>
 
-    @Query("SELECT COUNT(*) FROM offline_status_outbox WHERE staffPhone = :staffPhone")
-    fun observeCountForStaff(staffPhone: String): Flow<Int>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(action: OfflineActionEntity): Long
 

@@ -1,5 +1,10 @@
 package com.kwikklin.crm.ui.screens
 
+import com.kwikklin.crm.ui.components.withUniqueKeys
+import com.kwikklin.crm.ui.components.formatIsoDateShort
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -79,6 +84,7 @@ import com.kwikklin.crm.ui.components.KwikSearchField
 import com.kwikklin.crm.ui.components.StatusPill
 import com.kwikklin.crm.ui.components.formatRupees
 import com.kwikklin.crm.ui.components.openExternalUrl
+import kotlinx.coroutines.delay
 import com.kwikklin.crm.ui.theme.BorderLight
 import com.kwikklin.crm.ui.theme.BrandBlue
 import com.kwikklin.crm.ui.theme.BrandInk
@@ -112,13 +118,23 @@ fun BillsScreen(
     var search by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf("all") } // all, due, paid, mine
 
-    LaunchedEffect(filter) {
+    val reload: () -> Unit = {
         onLoadBills(
-            search,
+            search.trim(),
             if (filter == "due" || filter == "paid") filter else "all",
             filter == "mine",
             true
         )
+    }
+
+    // Filter changes reload at once; typing reloads after a short pause (no "Go" button needed).
+    LaunchedEffect(filter) { reload() }
+    var lastSearched by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(search) {
+        if (search.trim() == lastSearched) return@LaunchedEffect
+        delay(450)
+        lastSearched = search.trim()
+        reload()
     }
 
     LazyColumn(
@@ -148,14 +164,7 @@ fun BillsScreen(
                     )
                 }
                 IconButton(
-                    onClick = {
-                        onLoadBills(
-                            search,
-                            if (filter == "due" || filter == "paid") filter else "all",
-                            filter == "mine",
-                            true
-                        )
-                    },
+                    onClick = reload,
                     modifier = Modifier.testTag("bills_refresh_button")
                 ) {
                     Icon(Icons.Outlined.Refresh, contentDescription = "Refresh bills", tint = BrandBlue)
@@ -164,33 +173,16 @@ fun BillsScreen(
         }
 
         item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                KwikSearchField(
-                    value = search,
-                    onValueChange = { search = it },
-                    placeholder = "Bill number or customer name",
-                    testTag = "bills_search_input",
-                    modifier = Modifier.weight(1f)
-                )
-                Button(
-                    onClick = {
-                        onLoadBills(
-                            search,
-                            if (filter == "due" || filter == "paid") filter else "all",
-                            filter == "mine",
-                            true
-                        )
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.height(54.dp)
-                ) {
-                    Text("Go")
+            KwikSearchField(
+                value = search,
+                onValueChange = { search = it },
+                placeholder = "Search bill # or customer",
+                testTag = "bills_search_input",
+                onSearch = {
+                    lastSearched = search.trim()
+                    reload()
                 }
-            }
+            )
         }
 
         item {
@@ -240,7 +232,7 @@ fun BillsScreen(
                 )
             }
         } else {
-            items(bills, key = { "${it.number}_${it.created}" }) { bill ->
+            items(bills.withUniqueKeys { it.number }, key = { it.first }) { (_, bill) ->
                 BillRegisterCard(
                     me = me,
                     bill = bill,
@@ -512,7 +504,7 @@ fun ReceiptShareDialog(
 }
 
 /** Web-Parity Staff Expenses Screen (GET/POST /staff/api/expenses) */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ExpensesScreen(
     expenses: ExpensesResponse?,
@@ -571,25 +563,35 @@ fun ExpensesScreen(
                             color = InkPrimary,
                             fontWeight = FontWeight.Bold
                         )
-                        val cats = expenses?.categories.orEmpty().ifEmpty {
-                            listOf("Petrol / Fuel", "Detergent", "Electricity", "Packaging", "Other")
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            cats.take(4).forEach { c ->
-                                FilterChip(
-                                    selected = selectedCategory == c,
-                                    onClick = { selectedCategory = c; err = null },
-                                    label = { Text(c, maxLines = 1) }
-                                )
+                        // The shop defines the categories; only fall back to free text if it sent none.
+                        val serverCats = expenses?.categories.orEmpty()
+                        Text("Category", style = MaterialTheme.typography.labelLarge, color = InkMuted)
+                        if (serverCats.isNotEmpty()) {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(0.dp)
+                            ) {
+                                serverCats.forEach { c ->
+                                    FilterChip(
+                                        selected = selectedCategory == c,
+                                        onClick = { selectedCategory = c; err = null },
+                                        label = { Text(c, maxLines = 1) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = BrandSoft,
+                                            selectedLabelColor = BrandInk
+                                        )
+                                    )
+                                }
                             }
+                        } else {
+                            OutlinedTextField(
+                                value = selectedCategory,
+                                onValueChange = { selectedCategory = it; err = null },
+                                placeholder = { Text("e.g. Fuel, Detergent") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
-                        OutlinedTextField(
-                            value = selectedCategory,
-                            onValueChange = { selectedCategory = it; err = null },
-                            label = { Text("Category") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                         OutlinedTextField(
                             value = amountText,
                             onValueChange = { amountText = it; err = null },
@@ -608,12 +610,18 @@ fun ExpensesScreen(
                         )
                         if (!err.isNullOrBlank()) {
                             Text(err!!, color = StatusError, style = MaterialTheme.typography.labelMedium)
+                        } else if (!isOnline) {
+                            Text(
+                                "You're offline — expenses can only be saved with internet.",
+                                color = StatusWarning,
+                                style = MaterialTheme.typography.labelMedium
+                            )
                         }
                         Button(
                             onClick = {
                                 val amt = amountText.toDoubleOrNull()
                                 when {
-                                    selectedCategory.isBlank() -> err = "Pick or enter a category."
+                                    selectedCategory.isBlank() -> err = "Pick a category."
                                     amt == null || amt <= 0.0 -> err = "Enter a valid amount."
                                     else -> {
                                         onSaveExpense(selectedCategory.trim(), amt, desc.trim())
@@ -643,6 +651,15 @@ fun ExpensesScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
+                if (expenses.expenses.isEmpty()) {
+                    item {
+                        Text(
+                            "No expenses logged this month yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = InkMuted
+                        )
+                    }
+                }
                 items(expenses.expenses) { exp ->
                     Surface(
                         color = SurfaceWhite,
@@ -658,7 +675,9 @@ fun ExpensesScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(exp.category, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                 Text(
-                                    text = listOf(exp.spentOn, exp.description).filter { it.isNotBlank() }.joinToString(" · "),
+                                    text = listOf(formatIsoDateShort(exp.spentOn), exp.description)
+                                        .filter { it.isNotBlank() }
+                                        .joinToString(" · "),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = InkMuted
                                 )

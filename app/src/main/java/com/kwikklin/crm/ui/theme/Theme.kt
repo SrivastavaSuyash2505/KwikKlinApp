@@ -32,7 +32,22 @@ private val KwikKlinLightColorScheme = lightColorScheme(
     error = StatusError,
     onError = Color.White,
     errorContainer = StatusErrorSoft,
-    onErrorContainer = StatusError
+    onErrorContainer = StatusError,
+    // Material 3 draws dialogs, menus, switches, chips and sheets from these tokens.
+    // Left unset they fall back to M3's baseline lavender/pink palette, which clashed
+    // with the brand (e.g. pinkish AlertDialog backgrounds and switch tracks).
+    surfaceTint = BrandStrong,
+    surfaceDim = Color(0xFFE2E7F0),
+    surfaceBright = SurfaceWhite,
+    surfaceContainerLowest = SurfaceWhite,
+    surfaceContainerLow = Color(0xFFF8FAFD),
+    surfaceContainer = Color(0xFFF2F5FB),
+    surfaceContainerHigh = SurfaceWhite,
+    surfaceContainerHighest = Color(0xFFE6EBF3),
+    inverseSurface = NavyDeep,
+    inverseOnSurface = Color.White,
+    inversePrimary = BrandOnNavy,
+    scrim = Color.Black
 )
 
 val KwikKlinShapes = Shapes(

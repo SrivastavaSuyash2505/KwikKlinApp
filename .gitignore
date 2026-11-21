@@ -40,3 +40,14 @@ dist/
 *.patch
 *.docx
 .claude/
+
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+*.apk
+*.aab
+.kotlin/
+captures/
+*.iml

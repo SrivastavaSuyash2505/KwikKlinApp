@@ -1,6 +1,7 @@
 package com.kwikklin.crm.data.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -63,6 +64,9 @@ object StaffNotificationHelper {
         }
     }
 
+    // Permission is checked via hasNotificationPermission() at the top, which lint can't see
+    // through; notify() is additionally wrapped in runCatching.
+    @SuppressLint("MissingPermission")
     fun postStaffAlert(
         context: Context,
         notificationId: Int,

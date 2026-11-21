@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Close
@@ -39,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kwikklin.crm.data.network.OrderStage
@@ -74,14 +77,31 @@ import kotlin.math.roundToLong
 
 private val IndianLocale: Locale = Locale.forLanguageTag("en-IN")
 
-fun formatRupees(amount: Double): String {
-    val rounded = amount.roundToLong()
-    val formatter = NumberFormat.getNumberInstance(IndianLocale)
-    return "₹${formatter.format(rounded)}"
+// Formatters are not thread-safe, so keep one per thread instead of allocating per call
+// (formatRupees runs for every row of every list on each recomposition).
+// (ThreadLocal.withInitial needs API 26; minSdk is 24.)
+private val rupeeFormatter = object : ThreadLocal<NumberFormat>() {
+    override fun initialValue(): NumberFormat = NumberFormat.getNumberInstance(IndianLocale)
+}
+private val shortTimeFormatter = object : ThreadLocal<SimpleDateFormat>() {
+    override fun initialValue(): SimpleDateFormat = SimpleDateFormat("dd MMM, hh:mm a", IndianLocale)
 }
 
-fun formatTimeShort(epochMs: Long): String {
-    return SimpleDateFormat("dd MMM, hh:mm a", IndianLocale).format(Date(epochMs))
+fun formatRupees(amount: Double): String = "₹${rupeeFormatter.get()!!.format(amount.roundToLong())}"
+
+fun formatTimeShort(epochMs: Long): String = shortTimeFormatter.get()!!.format(Date(epochMs))
+
+private val isoDateParser = object : ThreadLocal<SimpleDateFormat>() {
+    override fun initialValue(): SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }
+}
+private val shortDateFormatter = object : ThreadLocal<SimpleDateFormat>() {
+    override fun initialValue(): SimpleDateFormat = SimpleDateFormat("d MMM", IndianLocale)
+}
+
+/** "2026-11-21" → "21 Nov". Anything that isn't a plain ISO date is returned unchanged. */
+fun formatIsoDateShort(raw: String): String {
+    val parsed = runCatching { isoDateParser.get()!!.parse(raw.take(10)) }.getOrNull() ?: return raw
+    return shortDateFormatter.get()!!.format(parsed)
 }
 
 fun stageColors(stage: OrderStage): Pair<Color, Color> = when (stage) {
@@ -206,7 +226,8 @@ fun KwikSearchField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     testTag: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSearch: (() -> Unit)? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -231,6 +252,8 @@ fun KwikSearchField(
             }
         },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = if (onSearch != null) ImeAction.Search else ImeAction.Done),
+        keyboardActions = KeyboardActions(onAny = { onSearch?.invoke() }),
         shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = SurfaceWhite,
@@ -399,6 +422,20 @@ fun OrderPipelineProgress(
                 color = InkMuted
             )
         }
+    }
+}
+
+/**
+ * Pairs each item with a LazyColumn key that is guaranteed unique. Duplicate keys crash
+ * LazyColumn, and server data can repeat (e.g. a bill shifting between offset pages, or
+ * two tasks with a blank code and the same title), so repeats get a "#n" suffix.
+ */
+fun <T> List<T>.withUniqueKeys(baseKey: (T) -> String): List<Pair<String, T>> {
+    val seen = HashMap<String, Int>(size)
+    return map { item ->
+        val base = baseKey(item)
+        val n = seen.merge(base, 1, Int::plus)!!
+        (if (n == 1) base else "$base#$n") to item
     }
 }
 

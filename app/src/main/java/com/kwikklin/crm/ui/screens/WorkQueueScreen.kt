@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -62,6 +63,7 @@ import com.kwikklin.crm.data.network.RouteStopDto
 import com.kwikklin.crm.data.network.StaffMeDto
 import com.kwikklin.crm.data.network.StaffRole
 import com.kwikklin.crm.data.network.TodayDto
+import com.kwikklin.crm.ui.components.withUniqueKeys
 import com.kwikklin.crm.ui.components.ConnectivityOutboxBanner
 import com.kwikklin.crm.ui.components.EmptyStateCard
 import com.kwikklin.crm.ui.components.KwikSearchField
@@ -395,7 +397,7 @@ fun WorkQueueScreen(
                 )
             }
         } else {
-            items(filteredStops, key = { "${it.number}_${it.status}_${it.kind}" }) { stop ->
+            items(filteredStops.withUniqueKeys { "${it.number}_${it.kind}" }, key = { it.first }) { (_, stop) ->
                 WorkStopCard(
                     me = me,
                     stop = stop,
@@ -629,15 +631,26 @@ private fun WorkStopCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (stop.delivery.isNotBlank()) {
-                    Text(
-                        text = "Due: ${stop.delivery}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = InkMuted
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.Schedule,
+                            contentDescription = null,
+                            tint = InkMuted,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stop.delivery,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = InkMuted
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
                 }
                 if (me.allowFinancialVisibility && stop.due > 0.0) {
                     Text(
-                        text = "Due: ${formatRupees(stop.due)}",
+                        text = "Collect ${formatRupees(stop.due)}",
                         style = MaterialTheme.typography.labelLarge,
                         color = StatusWarning,
                         fontWeight = FontWeight.Bold
@@ -674,6 +687,7 @@ private fun WorkStopCard(
                         },
                         enabled = !isSubmitting,
                         shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (stop.stage == OrderStage.OUT_FOR_DELIVERY || stop.stage == OrderStage.IN_IRON) {
                                 StatusSuccess
@@ -686,7 +700,12 @@ private fun WorkStopCard(
                             .height(48.dp)
                             .testTag("work_primary_cta_${stop.number}")
                     ) {
-                        Text(primaryCta.buttonLabel, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(
+                            primaryCta.buttonLabel,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 } else {
                     OutlinedButton(
@@ -705,10 +724,10 @@ private fun WorkStopCard(
                     if (!stop.navUrl.isNullOrBlank()) {
                         OutlinedButton(
                             onClick = { onNavigate(stop.navUrl) },
-                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .height(48.dp)
+                                .size(48.dp)
                                 .testTag("work_navigate_${stop.number}")
                         ) {
                             Icon(Icons.Outlined.Directions, contentDescription = "Directions", modifier = Modifier.size(20.dp))
@@ -717,10 +736,10 @@ private fun WorkStopCard(
 
                     OutlinedButton(
                         onClick = onCall,
-                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        contentPadding = PaddingValues(0.dp),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
-                            .height(48.dp)
+                            .size(48.dp)
                             .testTag("work_call_${stop.number}")
                     ) {
                         Icon(Icons.Outlined.Phone, contentDescription = "Call customer", modifier = Modifier.size(20.dp))
@@ -735,10 +754,10 @@ private fun WorkStopCard(
                     ) {
                         OutlinedButton(
                             onClick = onNotHome,
-                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .height(48.dp)
+                                .size(48.dp)
                                 .testTag("work_not_home_${stop.number}")
                         ) {
                             Icon(Icons.Outlined.DoorFront, contentDescription = "Customer not home", modifier = Modifier.size(20.dp))

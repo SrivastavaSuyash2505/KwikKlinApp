@@ -20,26 +20,36 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        create("debugConfig") {
-            storeFile = file("${rootDir}/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+    // A shared debug.keystore at the repo root keeps the signature stable across
+    // machines (so installs upgrade instead of conflicting). Without it, fall back
+    // to the Android SDK's per-machine debug key so a fresh clone still builds.
+    val sharedDebugKeystore = rootProject.file("debug.keystore")
+    if (sharedDebugKeystore.exists()) {
+        signingConfigs {
+            create("debugConfig") {
+                storeFile = sharedDebugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
         }
     }
+    val debugSigning = signingConfigs.findByName("debugConfig") ?: signingConfigs.getByName("debug")
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 strips unused code — mainly the huge material-icons-extended set,
+            // of which only a few dozen icons are used.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debugConfig")
+            signingConfig = debugSigning
         }
         debug {
-            signingConfig = signingConfigs.getByName("debugConfig")
+            signingConfig = debugSigning
         }
     }
 
@@ -51,6 +61,13 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { it.systemProperty("roborazzi.test.record", "true") }
+        }
     }
 
     packaging {
@@ -94,4 +111,14 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     debugImplementation(libs.androidx.ui.tooling)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    // JVM screenshot rendering of Compose screens (Robolectric native graphics + Roborazzi)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -8,21 +8,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.kwikklin.crm.R
 
+// The bundled .ttf files are static Regular-weight subsets. Declaring them only as
+// Normal lets Compose synthesize SemiBold/Bold. (Mapping the same Regular file to the
+// Bold slot — as before — told Compose the file *was* bold, so every heading rendered
+// at regular weight.)
 val PlusJakartaSansFamily = FontFamily(
-    Font(R.font.plus_jakarta_sans, FontWeight.Normal),
-    Font(R.font.plus_jakarta_sans, FontWeight.Medium),
-    Font(R.font.plus_jakarta_sans, FontWeight.SemiBold),
-    Font(R.font.plus_jakarta_sans, FontWeight.Bold)
+    Font(R.font.plus_jakarta_sans, FontWeight.Normal)
 )
 
 val InterFamily = FontFamily(
-    Font(R.font.inter, FontWeight.Normal),
-    Font(R.font.inter, FontWeight.Medium),
-    Font(R.font.inter, FontWeight.SemiBold),
-    Font(R.font.inter, FontWeight.Bold)
+    Font(R.font.inter, FontWeight.Normal)
 )
 
 val KwikKlinTypography = Typography(
+    headlineLarge = TextStyle(
+        fontFamily = PlusJakartaSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.5).sp
+    ),
     displaySmall = TextStyle(
         fontFamily = PlusJakartaSansFamily,
         fontWeight = FontWeight.Bold,

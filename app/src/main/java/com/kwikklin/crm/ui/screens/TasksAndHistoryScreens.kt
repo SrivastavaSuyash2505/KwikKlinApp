@@ -58,6 +58,7 @@ import com.kwikklin.crm.data.network.RouteStopDto
 import com.kwikklin.crm.data.network.StaffMeDto
 import com.kwikklin.crm.data.network.TaskDto
 import com.kwikklin.crm.data.network.TaskMessagesResponse
+import com.kwikklin.crm.ui.components.withUniqueKeys
 import com.kwikklin.crm.ui.components.ConnectivityOutboxBanner
 import com.kwikklin.crm.ui.components.EmptyStateCard
 import com.kwikklin.crm.ui.components.StatusPill
@@ -177,7 +178,7 @@ fun MyTasksScreen(
                 )
             }
         } else {
-            items(displayed, key = { it.code.ifBlank { it.title } }) { task ->
+            items(displayed.withUniqueKeys { it.code.ifBlank { it.title } }, key = { it.first }) { (_, task) ->
                 TaskCard(
                     me = me,
                     task = task,
@@ -657,7 +658,7 @@ fun HistoryScreen(
                     )
                 }
             } else {
-                items(completedOrders, key = { "done_${it.number}_${it.doneAt}" }) { stop ->
+                items(completedOrders.withUniqueKeys { "done_${it.number}_${it.doneAt}" }, key = { it.first }) { (_, stop) ->
                     val (fg, bg) = stageColors(stop.stage)
                     Surface(
                         color = SurfaceWhite,
@@ -712,7 +713,7 @@ fun HistoryScreen(
                     )
                 }
             } else {
-                items(completedTasks, key = { "done_task_${it.code}_${it.title}" }) { task ->
+                items(completedTasks.withUniqueKeys { "done_task_${it.code}_${it.title}" }, key = { it.first }) { (_, task) ->
                     Surface(
                         color = SurfaceWhite,
                         shape = RoundedCornerShape(16.dp),

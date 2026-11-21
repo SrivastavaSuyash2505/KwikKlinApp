@@ -62,6 +62,7 @@ import com.kwikklin.crm.data.network.OrderDuesResponse
 import com.kwikklin.crm.data.network.OrderStage
 import com.kwikklin.crm.data.network.StaffMeDto
 import com.kwikklin.crm.data.network.StaffRole
+import com.kwikklin.crm.ui.components.withUniqueKeys
 import com.kwikklin.crm.ui.components.EmptyStateCard
 import com.kwikklin.crm.ui.components.OrderPipelineProgress
 import com.kwikklin.crm.ui.components.StatusPill
@@ -328,7 +329,7 @@ fun OrderDetailScreen(
                         )
                     }
 
-                    items(order.lines, key = { "${it.line}_${it.name}" }) { line ->
+                    items(order.lines.withUniqueKeys { "${it.line}_${it.name}" }, key = { it.first }) { (_, line) ->
                         Surface(
                             color = SurfaceWhite,
                             shape = RoundedCornerShape(14.dp),

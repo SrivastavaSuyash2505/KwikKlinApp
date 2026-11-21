@@ -30,6 +30,8 @@ import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material.icons.outlined.Security
@@ -304,7 +306,7 @@ fun ProfileScreen(
                     // Shop Expenses — matching Web You tab (ME.can_expense)
                     if (me.canExpense) {
                         ProfileMenuRow(
-                            icon = Icons.Outlined.AccountBalanceWallet,
+                            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                             title = "Add Expense",
                             subtitle = "Log petrol, detergent, or shop expenses",
                             onClick = onOpenExpenses,
@@ -314,7 +316,7 @@ fun ProfileScreen(
                     }
 
                     ProfileMenuRow(
-                        icon = Icons.Outlined.Sync,
+                        icon = Icons.Outlined.History,
                         title = "Completed Work History",
                         subtitle = "View completed orders & finished tasks",
                         onClick = onOpenHistory,
@@ -654,7 +656,7 @@ fun AppSettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Connected directly to your live FastAPI + PostgreSQL CRM server.",
+                            text = "Only change this if your shop owner asks you to.",
                             style = MaterialTheme.typography.bodySmall,
                             color = InkMuted
                         )
@@ -690,7 +692,7 @@ fun AppSettingsScreen(
                                     .height(48.dp)
                                     .testTag("settings_ping_health_button")
                             ) {
-                                Text(if (isCheckingHealth) "Checking…" else "Ping /health")
+                                Text(if (isCheckingHealth) "Checking…" else "Test")
                             }
                         }
 

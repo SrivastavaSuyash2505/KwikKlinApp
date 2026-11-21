@@ -7,6 +7,7 @@ import com.kwikklin.crm.data.network.StaffApiClientFactory
 import com.kwikklin.crm.data.network.StaffApiService
 import com.kwikklin.crm.data.notifications.StaffNotificationHelper
 import com.kwikklin.crm.data.outbox.OutboxDatabase
+import com.kwikklin.crm.data.outbox.OutboxReplayer
 import com.kwikklin.crm.data.repository.StaffRepository
 import com.kwikklin.crm.data.security.SecureCookieJar
 
@@ -20,12 +21,17 @@ class KwikKlinApplication : Application() {
         StaffApiClientFactory.create(connectionPrefs, cookieJar)
     }
 
+    val outboxReplayer: OutboxReplayer by lazy {
+        OutboxReplayer(staffApiService, outboxDatabase.offlineActionDao())
+    }
+
     val staffRepository: StaffRepository by lazy {
         StaffRepository(
             context = this,
             api = staffApiService,
             cookieJar = cookieJar,
             outboxDao = outboxDatabase.offlineActionDao(),
+            outboxReplayer = outboxReplayer,
             connectionPrefs = connectionPrefs,
             networkMonitor = networkMonitor
         )
