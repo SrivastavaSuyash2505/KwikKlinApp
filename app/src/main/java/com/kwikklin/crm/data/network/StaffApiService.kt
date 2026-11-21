@@ -29,6 +29,12 @@ interface StaffApiService {
     @POST("staff/api/login")
     suspend fun login(@Body body: LoginRequest): Response<GenericActionResponse>
 
+    @POST("staff/api/otp/send")
+    suspend fun sendLoginOtp(@Body body: OtpSendRequest): Response<OtpSendResponse>
+
+    @POST("staff/api/otp/verify")
+    suspend fun verifyLoginOtp(@Body body: OtpVerifyRequest): Response<GenericActionResponse>
+
     @POST("staff/api/logout")
     suspend fun logout(): Response<GenericActionResponse>
 

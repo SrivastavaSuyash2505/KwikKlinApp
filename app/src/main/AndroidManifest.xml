@@ -15,6 +15,12 @@
         android:name="android.hardware.location.gps"
         android:required="false" />
 
+    <!-- Android 11+ package visibility: lets the OTP screen open WhatsApp / WhatsApp Business -->
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+    </queries>
+
     <application
         android:name=".KwikKlinApplication"
         android:allowBackup="false"

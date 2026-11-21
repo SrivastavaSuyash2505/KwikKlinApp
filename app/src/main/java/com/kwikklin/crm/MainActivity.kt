@@ -107,6 +107,12 @@ private fun KwikKlinStaffRoot(viewModel: StaffViewModel) {
                         isCheckingHealth = state.isCheckingHealth,
                         healthCheck = state.healthCheck,
                         onLogin = { phone, password -> viewModel.login(phone, password) },
+                        otpFlow = state.otpFlow,
+                        onSendOtp = { phone -> viewModel.sendLoginOtp(phone) },
+                        onVerifyOtp = { code -> viewModel.verifyLoginOtp(code) },
+                        onResendOtp = { viewModel.resendLoginOtp() },
+                        onCancelOtp = { viewModel.cancelLoginOtp() },
+                        onSelectOtpShop = { shopId -> viewModel.selectOtpShop(shopId) },
                         onUpdateServerUrl = { viewModel.updateServerBaseUrl(it) },
                         onCheckHealth = { viewModel.checkServerHealth(it) }
                     )

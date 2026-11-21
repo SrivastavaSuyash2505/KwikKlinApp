@@ -25,7 +25,7 @@ This application strictly separates **Staff Roles** from **Shop Subscription Pla
 
 No second database or duplicate business logic was created. The app talks directly to the existing FastAPI backend:
 
-- **Auth & Session**: `POST /staff/api/login`, `POST /staff/api/logout`, `POST /staff/api/password`, `GET /staff/api/boot`, `GET /health`
+- **Auth & Session**: `POST /staff/api/login`, `POST /staff/api/otp/send`, `POST /staff/api/otp/verify` (WhatsApp OTP sign-in, see [docs/WHATSAPP-OTP-LOGIN.md](docs/WHATSAPP-OTP-LOGIN.md)), `POST /staff/api/logout`, `POST /staff/api/password`, `GET /staff/api/boot`, `GET /health`
 - **Dashboard & Work**: `GET /staff/api/today`, `GET /staff/api/route?tab=todo|done`, `GET /staff/api/tasks?tab=mine|done`
 - **Order Lifecycle** (`RECEIVED → PICKUP_ASSIGNED → PICKED_UP → IN_WASH → IN_DRY → IN_IRON → READY → OUT_FOR_DELIVERY → DELIVERED`, plus `ON_HOLD` & `CANCELLED`):
   - `GET /staff/api/orders/{number}`

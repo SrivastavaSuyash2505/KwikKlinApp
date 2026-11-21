@@ -44,3 +44,6 @@ val StatusInfoSoft = Color(0xFFEEF2FF)
 
 val StatusBusy = Color(0xFF0D9488)
 val StatusBusySoft = Color(0xFFF0FDFA)
+
+// WhatsApp OTP sign-in button (dark enough for white text)
+val WhatsAppGreen = Color(0xFF1DA851)

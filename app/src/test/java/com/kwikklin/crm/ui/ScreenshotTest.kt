@@ -12,6 +12,8 @@ import com.kwikklin.crm.ui.screens.ReceiptShareDialog
 import com.kwikklin.crm.ui.screens.BillsScreen
 import com.kwikklin.crm.ui.screens.ExpensesScreen
 import com.kwikklin.crm.ui.screens.HistoryScreen
+import com.kwikklin.crm.data.network.OtpShopChoiceDto
+import com.kwikklin.crm.ui.OtpFlowState
 import com.kwikklin.crm.ui.screens.LoginScreen
 import com.kwikklin.crm.ui.screens.MyTasksScreen
 import com.kwikklin.crm.ui.screens.NetworkErrorScreen
@@ -68,6 +70,35 @@ class ScreenshotTest {
             serverBaseUrl = "https://kwikklin.online", sessionReason = null, loginError = null,
             isSubmitting = false, isCheckingHealth = false, healthCheck = null,
             onLogin = { _, _ -> }, onUpdateServerUrl = {}, onCheckHealth = {}
+        )
+    }
+
+    @Test fun s02b_login_otp_code() = shot("02b_login_otp_code") {
+        LoginScreen(
+            serverBaseUrl = "https://kwikklin.online", sessionReason = null, loginError = null,
+            isSubmitting = false, isCheckingHealth = false, healthCheck = null,
+            onLogin = { _, _ -> }, onUpdateServerUrl = {}, onCheckHealth = {},
+            otpFlow = OtpFlowState(
+                phone = "9876543210", maskedPhone = "+91 •••••• 3210",
+                sentAtMillis = System.currentTimeMillis()
+            )
+        )
+    }
+
+    @Test fun s02c_login_otp_choose_shop() = shot("02c_login_otp_choose_shop") {
+        LoginScreen(
+            serverBaseUrl = "https://kwikklin.online", sessionReason = null, loginError = null,
+            isSubmitting = false, isCheckingHealth = false, healthCheck = null,
+            onLogin = { _, _ -> }, onUpdateServerUrl = {}, onCheckHealth = {},
+            otpFlow = OtpFlowState(
+                phone = "9876543210", maskedPhone = "+91 •••••• 3210",
+                sentAtMillis = System.currentTimeMillis(), pendingCode = "482913",
+                error = "Wrong code. Check the WhatsApp message and try again.", attemptsLeft = 3,
+                shops = listOf(
+                    OtpShopChoiceDto(id = "t_ramesh", name = "Ramesh Laundry, Indore"),
+                    OtpShopChoiceDto(id = "t_sparkle", name = "Sparkle Dry Clean")
+                )
+            )
         )
     }
 

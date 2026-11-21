@@ -93,7 +93,7 @@ object StaffNotificationHelper {
             if (urgent) CHANNEL_URGENT else CHANNEL_GENERAL
         )
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(if (urgent) "Kwik Klin Urgent Alert" else "Kwik Klin Staff Update")
+            .setContentTitle(if (urgent) "Kwik Klin Urgent Alert" else "Kwik Klin Update")
             .setContentText("Open Kwik Klin to view your assigned work.")
             .build()
 

@@ -19,6 +19,7 @@ import com.kwikklin.crm.data.network.NotificationItemDto
 import com.kwikklin.crm.data.network.OrderDetailDto
 import com.kwikklin.crm.data.network.OrderDuesResponse
 import com.kwikklin.crm.data.network.OrderReceiptDto
+import com.kwikklin.crm.data.network.OtpShopChoiceDto
 import com.kwikklin.crm.data.network.PickupBillContextDto
 import com.kwikklin.crm.data.network.PointsDto
 import com.kwikklin.crm.data.network.RateCardItemDto
@@ -32,6 +33,7 @@ import com.kwikklin.crm.data.network.UsualItemDto
 import com.kwikklin.crm.data.notifications.StaffNotificationHelper
 import com.kwikklin.crm.data.outbox.OfflineActionEntity
 import com.kwikklin.crm.data.repository.ApiOutcome
+import com.kwikklin.crm.data.repository.OtpVerifyResult
 import com.kwikklin.crm.data.repository.StaffRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -54,8 +56,29 @@ sealed interface SessionState {
     data class NetworkFailure(val message: String, val hadSession: Boolean) : SessionState
 }
 
+/**
+ * WhatsApp OTP sign-in in progress (code already sent). Null = phone step / password form.
+ * The code is sent by the Kwik Klin platform WhatsApp number, never by the shop's number.
+ */
+data class OtpFlowState(
+    val phone: String,
+    val maskedPhone: String,
+    val sentAtMillis: Long,
+    val resendAfterSeconds: Int = 30,
+    val expiresInSeconds: Int = 300,
+    val isSending: Boolean = false,
+    val isVerifying: Boolean = false,
+    val error: String? = null,
+    val attemptsLeft: Int? = null,
+    /** Non-empty when the same phone works at several laundries. */
+    val shops: List<OtpShopChoiceDto> = emptyList(),
+    /** Code the staff typed, kept so a shop choice can re-verify without retyping. */
+    val pendingCode: String = ""
+)
+
 data class StaffUiState(
     val session: SessionState = SessionState.Splash,
+    val otpFlow: OtpFlowState? = null,
     val isRefreshing: Boolean = false,
     val isSubmitting: Boolean = false,
     val isOnline: Boolean = true,
@@ -224,6 +247,130 @@ class StaffViewModel(
                 is ApiOutcome.ServerError -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
                 else -> _uiState.update { it.copy(isSubmitting = false) }
             }
+        }
+    }
+
+    // ─── WhatsApp OTP sign-in ───────────────────────────────────────────────
+    fun sendLoginOtp(phone: String) {
+        if (phone.filter { it.isDigit() }.length < 10) {
+            _uiState.update { it.copy(loginError = "Enter your 10-digit mobile number.") }
+            return
+        }
+        if (_uiState.value.isSubmitting) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, loginError = null, subscriptionBanner = null) }
+            when (val res = repository.requestLoginOtp(phone)) {
+                is ApiOutcome.Success -> _uiState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        loginError = null,
+                        otpFlow = OtpFlowState(
+                            phone = phone,
+                            maskedPhone = res.data.maskedPhone.ifBlank { phone },
+                            sentAtMillis = System.currentTimeMillis(),
+                            resendAfterSeconds = res.data.resendAfter.coerceIn(5, 300),
+                            expiresInSeconds = res.data.expiresIn.coerceIn(60, 1800)
+                        )
+                    )
+                }
+                is ApiOutcome.SubscriptionOrLimitError -> _uiState.update {
+                    it.copy(isSubmitting = false, loginError = res.message, subscriptionBanner = res.message)
+                }
+                is ApiOutcome.Unauthorized -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
+                is ApiOutcome.NetworkError -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
+                is ApiOutcome.ServerError -> _uiState.update { it.copy(isSubmitting = false, loginError = res.message) }
+                else -> _uiState.update { it.copy(isSubmitting = false) }
+            }
+        }
+    }
+
+    fun resendLoginOtp() {
+        val flow = _uiState.value.otpFlow ?: return
+        if (flow.isSending || flow.isVerifying) return
+        viewModelScope.launch {
+            _uiState.update { st -> st.copy(otpFlow = st.otpFlow?.copy(isSending = true, error = null)) }
+            when (val res = repository.requestLoginOtp(flow.phone)) {
+                is ApiOutcome.Success -> _uiState.update { st ->
+                    st.copy(
+                        otpFlow = st.otpFlow?.copy(
+                            isSending = false,
+                            maskedPhone = res.data.maskedPhone.ifBlank { flow.maskedPhone },
+                            sentAtMillis = System.currentTimeMillis(),
+                            resendAfterSeconds = res.data.resendAfter.coerceIn(5, 300),
+                            expiresInSeconds = res.data.expiresIn.coerceIn(60, 1800),
+                            attemptsLeft = null,
+                            shops = emptyList(),
+                            pendingCode = ""
+                        )
+                    )
+                }
+                is ApiOutcome.Unauthorized -> setOtpError(res.message)
+                is ApiOutcome.SubscriptionOrLimitError -> setOtpError(res.message)
+                is ApiOutcome.NetworkError -> setOtpError(res.message)
+                is ApiOutcome.ServerError -> setOtpError(res.message)
+                else -> _uiState.update { st -> st.copy(otpFlow = st.otpFlow?.copy(isSending = false)) }
+            }
+        }
+    }
+
+    fun verifyLoginOtp(code: String, shopId: String? = null) {
+        val flow = _uiState.value.otpFlow ?: return
+        val cleanCode = code.filter { it.isDigit() }
+        if (cleanCode.length != 6) {
+            setOtpError("Enter the 6-digit code from WhatsApp.")
+            return
+        }
+        if (flow.isVerifying || flow.isSending) return
+        viewModelScope.launch {
+            _uiState.update { st ->
+                st.copy(otpFlow = st.otpFlow?.copy(isVerifying = true, error = null, pendingCode = cleanCode))
+            }
+            when (val res = repository.loginWithOtp(flow.phone, cleanCode, shopId)) {
+                is OtpVerifyResult.Success -> {
+                    _uiState.update { it.copy(otpFlow = null, loginError = null) }
+                    applyBootSuccess(res.boot, isInitial = true)
+                }
+                is OtpVerifyResult.ChooseShop -> _uiState.update { st ->
+                    st.copy(otpFlow = st.otpFlow?.copy(isVerifying = false, shops = res.shops))
+                }
+                is OtpVerifyResult.WrongCode -> _uiState.update { st ->
+                    st.copy(
+                        otpFlow = st.otpFlow?.copy(
+                            isVerifying = false,
+                            error = res.message,
+                            attemptsLeft = res.attemptsLeft
+                        )
+                    )
+                }
+                is OtpVerifyResult.Expired -> _uiState.update { st ->
+                    st.copy(otpFlow = st.otpFlow?.copy(isVerifying = false, error = res.message, attemptsLeft = 0))
+                }
+                is OtpVerifyResult.SubscriptionError -> _uiState.update {
+                    it.copy(otpFlow = null, loginError = res.message, subscriptionBanner = res.message)
+                }
+                is OtpVerifyResult.NetworkError -> setOtpError(res.message)
+                is OtpVerifyResult.Failed -> setOtpError(res.message)
+            }
+        }
+    }
+
+    fun selectOtpShop(shopId: String) {
+        val flow = _uiState.value.otpFlow ?: return
+        if (flow.pendingCode.length != 6) {
+            setOtpError("Enter the 6-digit code from WhatsApp.")
+            return
+        }
+        verifyLoginOtp(flow.pendingCode, shopId)
+    }
+
+    /** Back to the phone step (or password form). Server-side the code simply expires. */
+    fun cancelLoginOtp() {
+        _uiState.update { it.copy(otpFlow = null, loginError = null) }
+    }
+
+    private fun setOtpError(message: String) {
+        _uiState.update { st ->
+            st.copy(otpFlow = st.otpFlow?.copy(isSending = false, isVerifying = false, error = message))
         }
     }
 

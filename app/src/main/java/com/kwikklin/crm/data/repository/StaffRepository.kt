@@ -20,6 +20,11 @@ import com.kwikklin.crm.data.network.DeliverOrderRequest
 import com.kwikklin.crm.data.network.ExpensesResponse
 import com.kwikklin.crm.data.network.GenericActionResponse
 import com.kwikklin.crm.data.network.LoginRequest
+import com.kwikklin.crm.data.network.OtpSendRequest
+import com.kwikklin.crm.data.network.OtpSendResponse
+import com.kwikklin.crm.data.network.OtpShopChoiceDto
+import com.kwikklin.crm.data.network.OtpVerifyErrorDto
+import com.kwikklin.crm.data.network.OtpVerifyRequest
 import com.kwikklin.crm.data.network.NetworkMonitor
 import com.kwikklin.crm.data.network.NotHomeRequest
 import com.kwikklin.crm.data.network.NotificationsResponse
@@ -66,6 +71,22 @@ sealed interface ApiOutcome<out T> {
 }
 
 /**
+ * Outcome of the WhatsApp OTP verify step. Kept separate from [ApiOutcome] because
+ * "choose your shop" (HTTP 409) must not be confused with the order-conflict 409.
+ */
+sealed interface OtpVerifyResult {
+    data class Success(val boot: BootResponse) : OtpVerifyResult
+    /** Same phone works at several laundries: ask which one, then verify again with shopId. */
+    data class ChooseShop(val shops: List<OtpShopChoiceDto>) : OtpVerifyResult
+    data class WrongCode(val message: String, val attemptsLeft: Int?) : OtpVerifyResult
+    /** Code expired or was used up: the staff must request a fresh one. */
+    data class Expired(val message: String) : OtpVerifyResult
+    data class SubscriptionError(val message: String) : OtpVerifyResult
+    data class NetworkError(val message: String) : OtpVerifyResult
+    data class Failed(val message: String) : OtpVerifyResult
+}
+
+/**
  * Single source of truth for Kwik Klin staff operations.
  * Connects directly to FastAPI /staff/api endpoints with Keystore-encrypted cookies
  * and uses Room ONLY for safe offline status-only action queueing.
@@ -93,7 +114,7 @@ class StaffRepository(
 
     // ─── Auth & Session ─────────────────────────────────────────────────────
     suspend fun login(phone: String, password: String): ApiOutcome<BootResponse> {
-        val cleanPhone = phone.filter { it.isDigit() || it == '+' }.trim()
+        val cleanPhone = normalizePhone(phone)
         val loginOutcome = executeOnline { api.login(LoginRequest(cleanPhone, password)) }
         return when (loginOutcome) {
             is ApiOutcome.Success, is ApiOutcome.ConflictResolved -> bootSession()
@@ -105,6 +126,68 @@ class StaffRepository(
             is ApiOutcome.ServerError -> loginOutcome
         }
     }
+
+    /**
+     * WhatsApp OTP login, step 1. The code is sent by the Kwik Klin platform WhatsApp
+     * number (not the shop's own number), so login works even when a shop's WhatsApp
+     * link is down.
+     */
+    suspend fun requestLoginOtp(phone: String): ApiOutcome<OtpSendResponse> {
+        val cleanPhone = normalizePhone(phone)
+        if (!networkMonitor.checkCurrentlyOnline()) {
+            return ApiOutcome.NetworkError("Sending a WhatsApp code requires an internet connection.")
+        }
+        return executeOnline { api.sendLoginOtp(OtpSendRequest(cleanPhone)) }
+    }
+
+    /** WhatsApp OTP login, step 2. On success the kk_staff cookie is stored and the session is booted. */
+    suspend fun loginWithOtp(phone: String, code: String, shopId: String? = null): OtpVerifyResult {
+        val cleanPhone = normalizePhone(phone)
+        val cleanCode = code.filter { it.isDigit() }
+        val response = try {
+            api.verifyLoginOtp(OtpVerifyRequest(cleanPhone, cleanCode, shopId))
+        } catch (_: IOException) {
+            return OtpVerifyResult.NetworkError("No internet connection or Kwik Klin server is unreachable.")
+        } catch (e: Exception) {
+            return OtpVerifyResult.Failed(e.localizedMessage ?: "Unexpected network error.")
+        }
+
+        if (response.isSuccessful) {
+            return when (val boot = bootSession()) {
+                is ApiOutcome.Success -> OtpVerifyResult.Success(boot.data)
+                is ApiOutcome.SubscriptionOrLimitError -> OtpVerifyResult.SubscriptionError(boot.message)
+                is ApiOutcome.NetworkError -> OtpVerifyResult.NetworkError(boot.message)
+                is ApiOutcome.Unauthorized -> OtpVerifyResult.Failed(boot.message)
+                is ApiOutcome.MustChangePassword -> OtpVerifyResult.Failed(boot.message)
+                is ApiOutcome.ServerError -> OtpVerifyResult.Failed(boot.message)
+                is ApiOutcome.ConflictResolved -> OtpVerifyResult.Failed(boot.message)
+                is ApiOutcome.QueuedOffline -> OtpVerifyResult.NetworkError("Login requires an internet connection.")
+            }
+        }
+
+        val raw = runCatching { response.errorBody()?.string().orEmpty() }.getOrDefault("")
+        val parsed = runCatching { json.decodeFromString<OtpVerifyErrorDto>(raw) }.getOrNull()
+        val detail = parsed?.detail?.takeIf { it.isNotBlank() } ?: raw.take(180)
+        return when (response.code()) {
+            409 -> if (parsed?.shops?.isNotEmpty() == true) {
+                OtpVerifyResult.ChooseShop(parsed.shops)
+            } else {
+                OtpVerifyResult.Failed(detail.ifBlank { "Could not complete sign in." })
+            }
+            401 -> OtpVerifyResult.WrongCode(
+                detail.ifBlank { "Wrong code. Check the WhatsApp message and try again." },
+                parsed?.attemptsLeft
+            )
+            410 -> OtpVerifyResult.Expired(detail.ifBlank { "This code has expired. Request a new one." })
+            402, 403 -> OtpVerifyResult.SubscriptionError(
+                detail.ifBlank { "Shop subscription requires renewal. Please contact your shop owner." }
+            )
+            429 -> OtpVerifyResult.Expired(detail.ifBlank { "Too many wrong attempts. Request a new code." })
+            else -> OtpVerifyResult.Failed(detail.ifBlank { "Request failed (HTTP ${response.code()})." })
+        }
+    }
+
+    private fun normalizePhone(phone: String): String = phone.filter { it.isDigit() || it == '+' }.trim()
 
     suspend fun bootSession(): ApiOutcome<BootResponse> {
         val outcome = executeOnline { api.boot() }

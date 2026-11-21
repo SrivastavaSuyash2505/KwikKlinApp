@@ -86,6 +86,44 @@ data class LoginRequest(
     val password: String
 )
 
+/** WhatsApp OTP login — step 1: ask the Kwik Klin platform number to send a code. */
+@Serializable
+data class OtpSendRequest(
+    val phone: String
+)
+
+/** Server reply for POST /staff/api/otp/send. */
+@Serializable
+data class OtpSendResponse(
+    val ok: Boolean = true,
+    @SerialName("masked_phone") val maskedPhone: String = "",
+    @SerialName("expires_in") val expiresIn: Int = 300,
+    @SerialName("resend_after") val resendAfter: Int = 30,
+    val message: String? = null
+)
+
+/** WhatsApp OTP login — step 2: verify the 6-digit code. shop_id only when the phone belongs to several shops. */
+@Serializable
+data class OtpVerifyRequest(
+    val phone: String,
+    val code: String,
+    @SerialName("shop_id") val shopId: String? = null
+)
+
+/** Shop choice returned (HTTP 409, detail = "choose_shop") when one phone works at several laundries. */
+@Serializable
+data class OtpShopChoiceDto(
+    val id: String = "",
+    val name: String = ""
+)
+
+@Serializable
+data class OtpVerifyErrorDto(
+    val detail: String? = null,
+    val shops: List<OtpShopChoiceDto> = emptyList(),
+    @SerialName("attempts_left") val attemptsLeft: Int? = null
+)
+
 @Serializable
 data class ChangePasswordRequest(
     @SerialName("old_password") val oldPassword: String,
